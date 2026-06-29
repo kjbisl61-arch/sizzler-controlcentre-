@@ -1,0 +1,523 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sizzler — Control Centre</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #0A0E1A; color: #E8F4FD; min-height: 100vh; padding-bottom: 60px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+
+    .header { background: linear-gradient(135deg, #0A2A4A, #0A0E1A); padding: 16px 20px 12px; border-bottom: 1px solid #1E3A5F; display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+    .header h1 { font-size: 1.4rem; font-weight: 700; color: #00D4FF; text-shadow: 0 0 20px #00D4FF55; margin-bottom: 2px; }
+    .header p { font-size: 0.82rem; color: #8899AA; font-style: italic; }
+    .header-stat { background: #111827; border: 1px solid #1E3A5F; border-radius: 8px; padding: 7px 14px; text-align: center; }
+    .header-stat .label { font-size: 0.65rem; color: #8899AA; text-transform: uppercase; letter-spacing: 0.3px; }
+    .header-stat .value { font-size: 0.88rem; font-weight: 700; color: #00FF88; margin-top: 1px; }
+
+    /* Constitution */
+    .constitution { background: linear-gradient(135deg, #0A2A4A, #111827); border-left: 4px solid #00D4FF; padding: 12px 18px; font-size: 0.82rem; font-style: italic; color: #E8F4FD; line-height: 1.6; }
+
+    /* Tabs */
+    .tabs { display: flex; background: #111827; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid #1E3A5F; }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex: 1; min-width: 80px; padding: 10px 6px; background: transparent; border: none; border-bottom: 3px solid transparent; color: rgba(255,255,255,0.35); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; cursor: pointer; white-space: nowrap; font-family: inherit; transition: all 0.15s; }
+    .tab:hover { color: rgba(255,255,255,0.7); }
+    .tab.active { color: #00D4FF; border-bottom-color: #00D4FF; }
+
+    .body { padding: 18px 20px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .card { background: #111827; border: 1px solid #1E3A5F; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
+    .card.cyan { border-left: 3px solid #00D4FF; }
+    .card.coral { border-left: 3px solid #FF6B6B; }
+    .card.green { border-left: 3px solid #00FF88; }
+    .card.gold { border-left: 3px solid #FFD700; }
+    .card.sky { border-left: 3px solid #48CAE4; }
+    .card-title { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #8899AA; margin-bottom: 10px; }
+
+    /* Tags */
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.68rem; font-weight: 700; margin-right: 3px; }
+    .tag.green { background: #0A2A1A; color: #00FF88; border: 1px solid #00FF8844; }
+    .tag.cyan { background: #0A2A3A; color: #00D4FF; border: 1px solid #00D4FF44; }
+    .tag.coral { background: #2A0A0A; color: #FF6B6B; border: 1px solid #FF6B6B44; }
+    .tag.gold { background: #2A2000; color: #FFD700; border: 1px solid #FFD70044; }
+    .tag.grey { background: #1A1A2A; color: #8899AA; border: 1px solid #8899AA44; }
+    .tag.sky { background: #0A1A2A; color: #48CAE4; border: 1px solid #48CAE444; }
+
+    /* Rows */
+    .row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #1E3A5F; font-size: 0.85rem; }
+    .row:last-child { border-bottom: none; }
+
+    /* Tool links */
+    .tool-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E3A5F; }
+    .tool-row:last-child { border-bottom: none; }
+    .tool-name { font-size: 0.88rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot.live { background: #00FF88; box-shadow: 0 0 6px #00FF88; }
+    .dot.pending { background: #FFD700; }
+    .dot.planned { background: #1E3A5F; }
+    .open-btn { font-size: 0.72rem; color: #00D4FF; font-weight: 700; border: 1px solid #00D4FF44; padding: 3px 10px; border-radius: 5px; text-decoration: none; white-space: nowrap; }
+    .open-btn:hover { background: #00D4FF; color: #0A0E1A; }
+
+    /* Priority queue */
+    .q-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1E3A5F; }
+    .q-row:last-child { border-bottom: none; }
+    .q-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.72rem; font-weight: 700; flex-shrink: 0; }
+    .q-num.done { background: #00FF88; color: #0A0E1A; }
+    .q-num.active { background: #FF6B6B; color: white; }
+    .q-num.next { background: #00D4FF; color: #0A0E1A; }
+    .q-num.pending { background: #1E3A5F; color: #8899AA; }
+    .q-label { flex: 1; font-size: 0.85rem; }
+    .q-label.done { text-decoration: line-through; opacity: 0.4; }
+
+    /* Agent */
+    .agent-row { display: flex; align-items: flex-start; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1E3A5F; }
+    .agent-row:last-child { border-bottom: none; }
+    .agent-name { font-size: 0.88rem; font-weight: 700; min-width: 70px; flex-shrink: 0; }
+    .agent-role { font-size: 0.78rem; color: #8899AA; flex: 1; }
+
+    /* Doc registry */
+    .doc-row { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid #1E3A5F; font-size: 0.82rem; }
+    .doc-row:last-child { border-bottom: none; }
+    .doc-name { flex: 1; color: #E8F4FD; }
+    .doc-loc { font-size: 0.72rem; color: #8899AA; min-width: 110px; flex-shrink: 0; }
+    .doc-ver { font-size: 0.7rem; color: #48CAE4; min-width: 40px; flex-shrink: 0; }
+
+    /* Check in */
+    input[type=text], textarea { width: 100%; padding: 9px 12px; border: 1px solid #1E3A5F; border-radius: 6px; font-size: 0.85rem; background: #0A0E1A; color: #E8F4FD; font-family: inherit; outline: none; margin-bottom: 8px; }
+    input[type=text]:focus, textarea:focus { border-color: #00D4FF; }
+    .btn { padding: 8px 18px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer; border: none; font-family: inherit; }
+    .btn-cyan { background: #00D4FF; color: #0A0E1A; }
+    .btn-ghost { background: transparent; color: #8899AA; border: 1px solid #1E3A5F; }
+
+    .stat-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-box { flex: 1; min-width: 80px; background: #0A0E1A; border: 1px solid #1E3A5F; border-radius: 8px; padding: 10px; text-align: center; }
+    .stat-num { font-size: 1.4rem; font-weight: 700; color: #00D4FF; text-shadow: 0 0 10px #00D4FF55; }
+    .stat-lbl { font-size: 0.65rem; color: #8899AA; text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+
+    .section-gap { height: 8px; }
+    .footer { text-align: center; padding: 20px; font-size: 0.7rem; color: #1E3A5F; border-top: 1px solid #1E3A5F; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div>
+      <h1>Sizzler Control Centre</h1>
+      <p>Wave, Road & Everything Between · @sizzlerwaveandroad</p>
+    </div>
+    <button onclick="toggleFS()" style="background:#111827;border:1px solid #1E3A5F;color:#00FF88;padding:6px 14px;border-radius:6px;font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit;white-space:nowrap;">⛶ Full Screen</button>
+    <div class="header-stat">
+      <div class="label">System status</div>
+      <div class="value">● All systems live</div>
+    </div>
+  </div>
+
+  <div class="constitution">
+    "To live fully, document honestly, help others reach their potential, and build a system that generates lasting value — for Siz, for others, and for the world."
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab" onclick="switchTab('queue')">Build Queue</button>
+    <button class="tab" onclick="switchTab('agents')">Agents</button>
+    <button class="tab" onclick="switchTab('registry')">Registry</button>
+    <button class="tab" onclick="switchTab('gantt')">Gantt</button>
+    <button class="tab" onclick="switchTab('checkin')">Check In</button>
+    <button class="tab" onclick="switchTab('skills')">Skills</button>
+    <button class="tab" onclick="switchTab('phases')">Phases</button>
+  </div>
+
+  <div class="body">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-num">5</div><div class="stat-lbl">Live Tools</div></div>
+        <div class="stat-box"><div class="stat-num">15</div><div class="stat-lbl">Agents</div></div>
+        <div class="stat-box"><div class="stat-num">25</div><div class="stat-lbl">Tasks</div></div>
+        <div class="stat-box"><div class="stat-num">40+</div><div class="stat-lbl">Documents</div></div>
+      </div>
+
+      <div class="card green">
+        <div class="card-title">Live Tools</div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Jarvis V3</div><a href="https://sizzler-jarvis-v3.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Builder's Log</div><a href="https://sizzler-builderslog-3zno.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Control Centre</div><a href="https://sizzler-controlcentre.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot pending"></div>Daily Operating Guide</div><span style="font-size:0.75rem;color:#FFD700">Vercel pending</span></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Architecture Map</div><a href="https://sizzler-archmap.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-title">Three Design Principles — Test Every Build</div>
+        <div class="row"><span style="font-size:1rem">1️⃣</span><span>Does it make sense?</span></div>
+        <div class="row"><span style="font-size:1rem">2️⃣</span><span>Can we make it more efficient?</span></div>
+        <div class="row"><span style="font-size:1rem">3️⃣</span><span>Does it feel intuitive?</span></div>
+      </div>
+
+      <div class="card coral">
+        <div class="card-title">Working Rules</div>
+        <div class="row"><span class="tag coral">Rule 1</span><span>Single lane per session — one task only</span></div>
+        <div class="row"><span class="tag coral">Rule 2</span><span>2-hour hard stop — 90-min flag</span></div>
+        <div class="row"><span class="tag coral">Rule 3</span><span>Build UP and OUT — never sideways</span></div>
+        <div class="row"><span class="tag coral">Rule 4</span><span>Constitution first — test every idea against it</span></div>
+        <div class="row"><span class="tag coral">Rule 5</span><span>Rex first — every input stored before agents activate</span></div>
+      </div>
+
+      <div class="card gold">
+        <div class="card-title">Three Commercial Phases</div>
+        <div class="row"><div class="dot live" style="flex-shrink:0"></div><div><strong>Phase 1 — Serve Siz</strong><div style="font-size:0.75rem;color:#8899AA">Build the engine. Now.</div></div><span class="tag green">Active</span></div>
+        <div class="row"><div class="dot pending" style="flex-shrink:0"></div><div><strong>Phase 2 — Prove the Concept</strong><div style="font-size:0.75rem;color:#8899AA">ANT as first client. Content live.</div></div><span class="tag gold">Next</span></div>
+        <div class="row"><div class="dot planned" style="flex-shrink:0"></div><div><strong>Phase 3 — Serve Others</strong><div style="font-size:0.75rem;color:#8899AA">Jarvis as licensable product.</div></div><span class="tag grey">Future</span></div>
+      </div>
+    </div>
+
+    <!-- BUILD QUEUE -->
+    <div id="tab-queue" class="tab-content">
+      <div class="card cyan">
+        <div class="card-title">Next Up</div>
+        <div style="font-size:1rem;font-weight:700;color:#00D4FF">Jarvis Concept Drawing Session</div>
+        <div style="font-size:0.78rem;color:#8899AA;margin-top:4px">Resolve all TBDs in Agent Register v1.4. No building — thinking and drawing only.</div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Phase 1 — Design Tools (Current) ← WHERE WE ARE</div>
+        <div class="q-row"><div class="q-num active">1</div><div class="q-label">Jarvis Concept Drawing — resolve Agent Register v1.4 TBDs</div><span class="tag coral">Now</span></div>
+        <div class="q-row"><div class="q-num next">2</div><div class="q-label">Launch pad dashboard — upgrade MasterIndex, big cards, constitution at top</div><span class="tag cyan">Next</span></div>
+        <div class="q-row"><div class="q-num pending">3</div><div class="q-label">Custom favicon — Sizzler/Jarvis icon for all tools</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">4</div><div class="q-label">Daily Operating Guide — Vercel deployment</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">5</div><div class="q-label">Jarvis Definition Document — Ada owns, single source of truth</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">6</div><div class="q-label">Ideas database upgrade — structured fields in Jarvis V3</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num done">7</div><div class="q-label done">Rex database — localStorage connected</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num pending">8</div><div class="q-label">Search tab — Ada's Library</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">9</div><div class="q-label">Agents activated — Ada first, then Maya</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">10</div><div class="q-label">Knox — security layer built in from day one</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">11</div><div class="q-label">Sage — diagnostic and goals discovery agent</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">12</div><div class="q-label">Interpretation Layer — most complex build, TBDs must be resolved first</div><span class="tag grey">Pending</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Phase 2 — Build (Starts when Phase 1 complete)</div>
+        <div class="q-row"><div class="q-num pending">13</div><div class="q-label">Cleo — photo/video caption analysis</div><span class="tag gold">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">14</div><div class="q-label">Voice interaction for Jarvis</div><span class="tag gold">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">15</div><div class="q-label">Scout — web intelligence agent</div><span class="tag gold">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">16</div><div class="q-label">ANT onboarded as first Jarvis client</div><span class="tag gold">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">17</div><div class="q-label">Content launch — social media live</div><span class="tag gold">Phase 2</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Phase 3 — Beta Launch &amp; Test</div>
+        <div class="q-row"><div class="q-num pending">18</div><div class="q-label">NZ Bodysurfing Guide — Amazon KDP</div><span class="tag sky">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">19</div><div class="q-label">Patreon setup</div><span class="tag sky">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">20</div><div class="q-label">Jarvis as licensable product</div><span class="tag sky">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">21</div><div class="q-label">Hardware review — August 2026</div><span class="tag sky">Phase 3</span></div>
+      </div>
+    </div>
+
+    <!-- AGENTS -->
+    <div id="tab-agents" class="tab-content">
+      <div class="card cyan">
+        <div class="card-title">Agent Register — Full Roster (15)</div>
+        <div style="font-size:0.78rem;color:#8899AA;margin-bottom:10px">Reference: SIZZLER_JARVIS_AGENT_REGISTER_v1.4 — 03_Jarvis/Docs/</div>
+
+        <div class="agent-row"><div class="agent-name" style="color:#00D4FF">Jarvis</div><div class="agent-role">The Platform — Command Centre. All loops flow through Jarvis.</div><span class="tag cyan">Active</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#FF6B6B">Ellis</div><div class="agent-role">Editor & Gatekeeper. Nothing goes live without sign-off.</div><span class="tag gold">Under dev</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#F4A261">Ada</div><div class="agent-role">Document Control. First agent activated. Authors all agent definition docs.</div><span class="tag gold">Under dev</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#00FF88">Maya</div><div class="agent-role">Writer. Second agent activated. All written content.</div><span class="tag cyan">Version 1</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#00FF88">Rex</div><div class="agent-role">Database. System memory. Rex-first on every input.</div><span class="tag green">Live ✅</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#00FF88">Knox</div><div class="agent-role">Security & Authentication. Built in from day one — cannot be retrofitted.</div><span class="tag cyan">Version 1</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#00FF88">Sage</div><div class="agent-role">Diagnostic & Goals Discovery. Hard Stop. Four pathways.</div><span class="tag cyan">Version 1</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Ray</div><div class="agent-role">Audio — podcast, voiceover, sound.</div><span class="tag grey">Version 2</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Finn</div><div class="agent-role">Video — editing, Reels, YouTube.</div><span class="tag grey">Version 2</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Cleo</div><div class="agent-role">Media Assets — organises and distributes media to agents.</div><span class="tag grey">Version 2</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Marco</div><div class="agent-role">Products & Services — affiliate, partnerships.</div><span class="tag grey">Version 2</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Leo</div><div class="agent-role">Contracts — brand deals, agreements.</div><span class="tag grey">Version 2</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Max</div><div class="agent-role">Accounting & Budget — income tracking, budget vs actual.</div><span class="tag grey">Version 2</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Vera</div><div class="agent-role">Legal — IP protection, compliance framework.</div><span class="tag grey">Version 2</span></div>
+        <div class="agent-row"><div class="agent-name" style="color:#8899AA">Scout</div><div class="agent-role">Web Intelligence — finds trends, people, events → Rex.</div><span class="tag grey">Version 2</span></div>
+      </div>
+
+      <div class="card coral">
+        <div class="card-title">Interpretation Layer — Most Complex Build</div>
+        <div style="font-size:0.85rem;color:#FF6B6B;font-weight:700;margin-bottom:6px">⚠️ Do not start until all TBDs resolved</div>
+        <div class="row"><span class="tag coral">Input 1</span><span style="font-size:0.82rem">Idea — new concept or possibility</span></div>
+        <div class="row"><span class="tag coral">Input 2</span><span style="font-size:0.82rem">Task — something specific to do</span></div>
+        <div class="row"><span class="tag coral">Input 3</span><span style="font-size:0.82rem">Content Request — create for a platform</span></div>
+        <div class="row"><span class="tag coral">Input 4</span><span style="font-size:0.82rem">Question — needs research or analysis</span></div>
+        <div class="row"><span class="tag coral">Input 5</span><span style="font-size:0.82rem">Problem — something not working</span></div>
+        <div class="row"><span class="tag coral">Input 6</span><span style="font-size:0.82rem">Document — file, review or retrieve</span></div>
+        <div class="row"><span class="tag coral">Input 7</span><span style="font-size:0.82rem">Decision — needs weighing before acting</span></div>
+      </div>
+    </div>
+
+    <!-- DOCUMENT REGISTRY -->
+    <div id="tab-registry" class="tab-content">
+
+      <div class="card green">
+        <div class="card-title">01_Foundation — Locked Documents</div>
+        <div class="doc-row"><div class="doc-name">Architecture Blueprint</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Claude Development Vision</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Brand Bible</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Bad Day Protocol</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Content Bank</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Social Media Guides</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Promotion Strategy</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Daily Planner</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Session Starters</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">The Bali Clarity</div><div class="doc-ver">v1.2</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">My Goals</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Training Programme</div><div class="doc-ver">v1.1</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">FND Movement Map</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Sizzler Gantt Chart</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">README.html</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">Root folder</div></div>
+      </div>
+
+      <div class="card gold">
+        <div class="card-title">02_Drafts — Work In Progress</div>
+        <div class="doc-row"><div class="doc-name">Business Plan</div><div class="doc-ver">v1.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+        <div class="doc-row"><div class="doc-name">Business Description</div><div class="doc-ver">v2.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+        <div class="doc-row"><div class="doc-name">Executive Summary</div><div class="doc-ver">v2.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+        <div class="doc-row"><div class="doc-name">Master Plan</div><div class="doc-ver">v4.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+        <div class="doc-row"><div class="doc-name">Marketing Plan Appendix A</div><div class="doc-ver">v2.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+        <div class="doc-row"><div class="doc-name">Brand Kit</div><div class="doc-ver">v2.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+        <div class="doc-row"><div class="doc-name">Brand Voice Guide</div><div class="doc-ver">v2.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+        <div class="doc-row"><div class="doc-name">Brain Dump Template</div><div class="doc-ver">v2.0</div><span class="tag gold">Draft</span><div class="doc-loc">02_Drafts</div></div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-title">03_Jarvis — Build Documents</div>
+        <div class="doc-row"><div class="doc-name">Agent Register (Master Blueprint)</div><div class="doc-ver">v1.4</div><span class="tag cyan">Live</span><div class="doc-loc">03_Jarvis/Docs</div></div>
+        <div class="doc-row"><div class="doc-name">Agent Connection Map</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">03_Jarvis/Docs</div></div>
+        <div class="doc-row"><div class="doc-name">Jarvis V3.html</div><div class="doc-ver">v3.0</div><span class="tag green">Live</span><div class="doc-loc">03_Jarvis/Builds</div></div>
+        <div class="doc-row"><div class="doc-name">Builder's Log.html</div><div class="doc-ver">v2.0</div><span class="tag green">Live</span><div class="doc-loc">03_Jarvis/Builds</div></div>
+        <div class="doc-row"><div class="doc-name">Control Centre.html</div><div class="doc-ver">v3.0</div><span class="tag green">Live</span><div class="doc-loc">03_Jarvis/Builds</div></div>
+        <div class="doc-row"><div class="doc-name">Daily Operating Guide.html</div><div class="doc-ver">v1.0</div><span class="tag gold">Vercel pending</span><div class="doc-loc">03_Jarvis/Builds</div></div>
+        <div class="doc-row"><div class="doc-name">MasterIndex.html</div><div class="doc-ver">v2.0</div><span class="tag green">Done</span><div class="doc-loc">03_Jarvis/Builds</div></div>
+        <div class="doc-row"><div class="doc-name">Folder Directory.html</div><div class="doc-ver">v1.0</div><span class="tag green">Done</span><div class="doc-loc">03_Jarvis/Builds</div></div>
+        <div class="doc-row"><div class="doc-name">Jarvis Definition Document</div><div class="doc-ver">—</div><span class="tag coral">Planned</span><div class="doc-loc">03_Jarvis/Docs</div></div>
+      </div>
+
+      <div class="card sky">
+        <div class="card-title">05_Clients — Aotearoa Bodysurfing NZ</div>
+        <div class="doc-row"><div class="doc-name">ANT Master Plan</div><div class="doc-ver">v1.0</div><span class="tag green">Filed</span><div class="doc-loc">05_Clients/ANT</div></div>
+        <div class="doc-row"><div class="doc-name">ANT Marketing Plan</div><div class="doc-ver">v1.0</div><span class="tag green">Filed</span><div class="doc-loc">05_Clients/ANT</div></div>
+        <div class="doc-row"><div class="doc-name">ANT Promotion Strategy</div><div class="doc-ver">v1.0</div><span class="tag green">Filed</span><div class="doc-loc">05_Clients/ANT</div></div>
+        <div class="doc-row"><div class="doc-name">ANT Social Media Guides</div><div class="doc-ver">v1.0</div><span class="tag green">Filed</span><div class="doc-loc">05_Clients/ANT</div></div>
+        <div class="doc-row"><div class="doc-name">ANT Daily Planner</div><div class="doc-ver">v1.0</div><span class="tag green">Filed</span><div class="doc-loc">05_Clients/ANT</div></div>
+        <div class="doc-row"><div class="doc-name">ANT Content Ideas Bank</div><div class="doc-ver">v1.0</div><span class="tag green">Filed</span><div class="doc-loc">05_Clients/ANT</div></div>
+      </div>
+
+      <div class="card coral">
+        <div class="card-title">Planned — Not Yet Built</div>
+        <div class="doc-row"><div class="doc-name">Jarvis Definition Document</div><div class="doc-ver">—</div><span class="tag coral">Planned</span><div class="doc-loc">03_Jarvis/Docs</div></div>
+        <div class="doc-row"><div class="doc-name">Agent Activation Guides (x15)</div><div class="doc-ver">—</div><span class="tag coral">Planned</span><div class="doc-loc">03_Jarvis/Agents</div></div>
+        <div class="doc-row"><div class="doc-name">Commercial Strategy Document</div><div class="doc-ver">—</div><span class="tag coral">Planned</span><div class="doc-loc">01_Foundation</div></div>
+        <div class="doc-row"><div class="doc-name">Jarvis Product Specification</div><div class="doc-ver">—</div><span class="tag coral">Planned</span><div class="doc-loc">03_Jarvis/Docs</div></div>
+      </div>
+    </div>
+
+    <!-- GANTT -->
+    <div id="tab-gantt" class="tab-content">
+      <div class="card green">
+        <div class="card-title">Gantt Chart — June 2026 to June 2027</div>
+        <div style="font-size:0.85rem;margin-bottom:12px;color:#E8F4FD">25 tasks tracked across 13 months. Update status and progress % at end of every session.</div>
+        <a href="https://1drv.ms/x/c/58b0cd7e7aac633d/IQB-NwfKkkj8QoP_A0oPZk9uAe_97WKOXIwMRAHecnh7PNg?e=w5qJs3" target="_blank" class="open-btn" style="display:inline-block;margin-bottom:14px">Open Gantt Chart →</a>
+        <div class="row"><span class="tag green">Done</span><span style="font-size:0.82rem">Architecture Blueprint, Brand docs, Business Plan, Gantt, Agent Map</span></div>
+        <div class="row"><span class="tag cyan">Active</span><span style="font-size:0.82rem">Jarvis V3 dark cockpit, Control Centre, Document Registry</span></div>
+        <div class="row"><span class="tag gold">Pending</span><span style="font-size:0.82rem">Daily Guide Vercel, Jarvis Definition Doc, Ideas upgrade, Rex, Search</span></div>
+        <div class="row"><span class="tag grey">Phase 2</span><span style="font-size:0.82rem">Content launch, ANT gathering, Voice, Scout, Van research</span></div>
+        <div class="row"><span class="tag sky">Phase 3</span><span style="font-size:0.82rem">Guide, Patreon, Jarvis product, Hardware</span></div>
+      </div>
+
+      <div class="card cyan">
+        <div class="card-title">Update Protocol</div>
+        <div class="row"><span style="font-size:0.85rem">1. Open Gantt via button above</span></div>
+        <div class="row"><span style="font-size:0.85rem">2. Update Status column for completed tasks</span></div>
+        <div class="row"><span style="font-size:0.85rem">3. Update Progress % for in-progress tasks</span></div>
+        <div class="row"><span style="font-size:0.85rem">4. Save and close</span></div>
+        <div class="row"><span style="font-size:0.85rem">5. Log session in Builder's Log</span></div>
+      </div>
+    </div>
+
+    <!-- SKILLS -->
+    <div id="tab-skills" class="tab-content">
+      <div class="card cyan">
+        <div class="card-title">Skills Register — Claude skills, prompts &amp; build techniques</div>
+        <p style="font-size:0.85rem;color:#8899AA;margin-bottom:14px">Captured as you learn. Every technique, prompt and workflow trick stored and searchable.</p>
+        <a href="https://sizzler-skillsregister.vercel.app/" target="_blank" style="display:block;background:#00D4FF;color:#0A0E1A;padding:10px 20px;border-radius:6px;text-decoration:none;font-size:0.85rem;font-weight:700;text-align:center;margin-bottom:10px">Open Skills Register →</a>
+        <div style="font-size:0.75rem;color:#8899AA;text-align:center">Skills Register lives on your desktop and in 03_Jarvis/Builds/</div>
+      </div>
+      <div class="card">
+        <div class="card-title">How to use</div>
+        <div class="row"><span style="font-size:0.85rem">During any session — say <strong style="color:#00D4FF">"log that as a skill"</strong></span></div>
+        <div class="row"><span style="font-size:0.85rem">Claude writes it up as a clean entry</span></div>
+        <div class="row"><span style="font-size:0.85rem">You paste it into the Skills Register</span></div>
+        <div class="row"><span style="font-size:0.85rem">Search and find any skill in seconds</span></div>
+        <div class="row"><span style="font-size:0.85rem">Export JSON for laptop migration</span></div>
+      </div>
+      <div class="card coral">
+        <div class="card-title">Five categories</div>
+        <div class="row"><span class="tag cyan">Prompt Structures</span><span style="font-size:0.82rem">How to brief Claude for maximum output</span></div>
+        <div class="row"><span class="tag gold">Session Management</span><span style="font-size:0.82rem">Toolbox talk, single lane, 2-hour rule</span></div>
+        <div class="row"><span class="tag green">Build Techniques</span><span style="font-size:0.82rem">GitHub, Vercel, HTML approach</span></div>
+        <div class="row"><span class="tag sky">Document Production</span><span style="font-size:0.82rem">Word docs, brand kit application</span></div>
+        <div class="row"><span class="tag coral">Agent Thinking</span><span style="font-size:0.82rem">How to brief each agent before activation</span></div>
+      </div>
+    </div>
+
+
+    <!-- PHASES -->
+    <div id="tab-phases" class="tab-content">
+
+      <div class="card cyan">
+        <div class="card-title">Four Phase Build Model — The phase gate question</div>
+        <p style="font-size:0.82rem;color:#E8F4FD;line-height:1.6;margin-bottom:6px">Before building anything ask: <strong style="color:#00D4FF">What phase does this belong to — and are we in that phase yet?</strong></p>
+        <p style="font-size:0.78rem;color:#8899AA">If Phase 2 or later — TBD register or build queue. No discussion. No detour.</p>
+      </div>
+
+      <div class="card" style="border-left:3px solid #00FF88">
+        <div class="card-title" style="color:#00FF88">Phase 1 — Design Tools (WHERE WE ARE NOW)</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:10px">Build the tools that help design the system. Claude is the primary build tool.</p>
+        <div class="q-row"><div class="q-num done">1</div><div class="q-label done">Control Centre</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">2</div><div class="q-label done">Builder Log</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">3</div><div class="q-label done">Gantt Chart v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">4</div><div class="q-label done">Agent Register v1.4</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">5</div><div class="q-label done">Business Plan v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">6</div><div class="q-label done">Architecture Blueprint v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">7</div><div class="q-label done">Concept Drawing v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">8</div><div class="q-label done">Skills Register</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">9</div><div class="q-label done">Architecture Map — interactive visual</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num active">10</div><div class="q-label">Daily Operating Guide — Vercel</div><span class="tag coral">Next</span></div>
+        <div class="q-row"><div class="q-num pending">11</div><div class="q-label">Launch pad dashboard — MasterIndex upgrade</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">12</div><div class="q-label">Custom favicon — all tools</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">13</div><div class="q-label">Jarvis Definition Document — Ada owns</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">14</div><div class="q-label">Ideas HTML page — four phases, four principles</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">15</div><div class="q-label">TBD resolution session — Agent Register v1.5</div><span class="tag grey">Pending</span></div>
+        <div class="q-row"><div class="q-num pending">16</div><div class="q-label">Backup protocol — 06_Tools/Backup/ JSON exports</div><span class="tag grey">Pending</span></div>
+      </div>
+
+      <div class="card" style="border-left:3px solid #00D4FF">
+        <div class="card-title" style="color:#00D4FF">Phase 2 — Build</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:10px">Plan locked. TBDs resolved. Build each component in order with confidence. No guessing.</p>
+        <div class="q-row"><div class="q-num pending">1</div><div class="q-label">Activate Ada — document control live</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">2</div><div class="q-label">Activate Maya — writer live</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">3</div><div class="q-label">Knox — security layer built in from day one</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">4</div><div class="q-label">Sage — diagnostic and goals discovery</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">5</div><div class="q-label">Interpretation Layer — most complex build</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">6</div><div class="q-label">Voice interface — conversational Jarvis</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">7</div><div class="q-label">Jarvis entry portal — five enterprise types</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">8</div><div class="q-label">Scout — web intelligence overnight</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">9</div><div class="q-label">Morning briefing system live</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">10</div><div class="q-label">Cleo — media assets agent</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">11</div><div class="q-label">Rex upgrade — localStorage to database</div><span class="tag cyan">Phase 2</span></div>
+      </div>
+
+      <div class="card" style="border-left:3px solid #FFD700">
+        <div class="card-title" style="color:#FFD700">Phase 3 — Beta Launch and Test</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:10px">Live but controlled. Real users, real inputs. ANT as first client. Find bugs, fix, refine.</p>
+        <div class="q-row"><div class="q-num pending">1</div><div class="q-label">ANT onboarded as first beta client</div><span class="tag gold">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">2</div><div class="q-label">Bali media catalog processed by Cleo</div><span class="tag gold">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">3</div><div class="q-label">Content launch — social media live</div><span class="tag gold">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">4</div><div class="q-label">Web/UI Development Agent activated</div><span class="tag gold">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">5</div><div class="q-label">NZ Bodysurfing Guide — Amazon KDP</div><span class="tag gold">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">6</div><div class="q-label">Patreon setup</div><span class="tag gold">Phase 3</span></div>
+        <div class="q-row"><div class="q-num pending">7</div><div class="q-label">Ray, Finn, Marco, Leo, Max, Vera activated</div><span class="tag gold">Phase 3</span></div>
+      </div>
+
+      <div class="card" style="border-left:3px solid #FF6B6B">
+        <div class="card-title" style="color:#FF6B6B">Phase 4 — Live Launch</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:10px">Mostly bug free. Jarvis operational. Content machine running. The vision delivered.</p>
+        <div class="q-row"><div class="q-num pending">1</div><div class="q-label">Jarvis as licensable product</div><span class="tag coral">Phase 4</span></div>
+        <div class="q-row"><div class="q-num pending">2</div><div class="q-label">Hardware review and upgrade</div><span class="tag coral">Phase 4</span></div>
+        <div class="q-row"><div class="q-num pending">3</div><div class="q-label">PWA — full screen app for all tools</div><span class="tag coral">Phase 4</span></div>
+        <div class="q-row"><div class="q-num pending">4</div><div class="q-label">Visual flow map — neural process layer</div><span class="tag coral">Phase 4</span></div>
+        <div class="q-row"><div class="q-num pending">5</div><div class="q-label">Jarvis scales globally</div><span class="tag coral">Phase 4</span></div>
+      </div>
+
+    </div>
+
+    <!-- CHECK IN -->
+    <div id="tab-checkin" class="tab-content">
+      <div class="card cyan">
+        <div class="card-title">Session Check In</div>
+        <div id="checkin-saved" style="display:none">
+          <div style="font-size:1rem;font-weight:700;color:#00D4FF" id="checkin-text"></div>
+          <div style="font-size:0.75rem;color:#8899AA;margin-top:4px" id="checkin-time"></div>
+          <button class="btn btn-ghost" style="margin-top:8px;font-size:0.72rem;padding:5px 12px" onclick="resetCheckin()">Reset</button>
+        </div>
+        <div id="checkin-form">
+          <label style="font-size:0.72rem;color:#8899AA;display:block;margin-bottom:4px">Today's single lane focus</label>
+          <input type="text" id="checkin-input" placeholder="What is the one thing getting done today?" />
+          <button class="btn btn-cyan" onclick="saveCheckin()">Check Me In</button>
+        </div>
+      </div>
+
+      <div class="card coral">
+        <div class="card-title">Before You Start — Lane Check</div>
+        <div class="row"><span style="font-size:0.85rem">Is today's task on the Build Queue?</span></div>
+        <div class="row"><span style="font-size:0.85rem">Does it serve the constitution?</span></div>
+        <div class="row"><span style="font-size:0.85rem">Does it make sense / efficient / intuitive?</span></div>
+        <div class="row"><span style="font-size:0.85rem">Is it the highest priority item in the queue?</span></div>
+      </div>
+
+      <div class="card gold">
+        <div class="card-title">End of Session Protocol</div>
+        <div class="row"><span class="tag gold">1</span><span style="font-size:0.85rem">Update Builder's Log — log session</span></div>
+        <div class="row"><span class="tag gold">2</span><span style="font-size:0.85rem">Update Gantt — Status and Progress %</span></div>
+        <div class="row"><span class="tag gold">3</span><span style="font-size:0.85rem">Update Document Registry if new docs added</span></div>
+        <div class="row"><span class="tag gold">4</span><span style="font-size:0.85rem">Email new docs to self — IP timestamp</span></div>
+        <div class="row"><span class="tag gold">5</span><span style="font-size:0.85rem">Save all files to OneDrive</span></div>
+        <div class="row"><span class="tag gold">6</span><span style="font-size:0.85rem">Close laptop — rest</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Sizzler Control Centre v3.0 · June 2026 · @sizzlerwaveandroad<br>
+    Owner: Siz (Keith Boyd) · Document Control: Ada · Strategic framework: Wilson & Gilligan
+  </div>
+
+</div>
+
+<script>
+function toggleFS() {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
+}
+
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+function saveCheckin() {
+  var val = document.getElementById('checkin-input').value.trim();
+  if (!val) return;
+  var now = new Date();
+  var timeStr = now.toLocaleTimeString('en-NZ', {hour:'2-digit', minute:'2-digit'}) + ' · ' + now.toLocaleDateString('en-NZ', {day:'numeric', month:'short', year:'numeric'});
+  document.getElementById('checkin-text').textContent = '⚡ ' + val;
+  document.getElementById('checkin-time').textContent = 'Checked in: ' + timeStr;
+  document.getElementById('checkin-form').style.display = 'none';
+  document.getElementById('checkin-saved').style.display = 'block';
+}
+
+function resetCheckin() {
+  document.getElementById('checkin-input').value = '';
+  document.getElementById('checkin-form').style.display = 'block';
+  document.getElementById('checkin-saved').style.display = 'none';
+}
+</script>
+
+</body>
+</html>
