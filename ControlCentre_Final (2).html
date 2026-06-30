@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sizzler — Control Centre</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #0A0E1A; color: #E8F4FD; min-height: 100vh; padding-bottom: 40px; }
+    .wrap { max-width: 960px; margin: 0 auto; }
+
+    .header { background: linear-gradient(135deg, #0A2A4A, #0A0E1A); padding: 14px 20px; border-bottom: 1px solid #1E3A5F; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    .header-left { display: flex; flex-direction: column; }
+    .header h1 { font-size: 1.3rem; font-weight: 700; color: #00D4FF; text-shadow: 0 0 20px #00D4FF55; }
+    .header p { font-size: 0.75rem; color: #8899AA; font-style: italic; }
+    .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .fs-btn { background: #111827; border: 1px solid #1E3A5F; color: #00FF88; padding: 6px 14px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .fs-btn:hover { background: #00FF88; color: #0A0E1A; }
+
+    /* Constitution banner */
+    .constitution { background: linear-gradient(135deg, #0A2A4A, #111827); border-left: 4px solid #00D4FF; padding: 10px 18px; font-size: 0.8rem; font-style: italic; color: #E8F4FD; line-height: 1.6; }
+
+    /* Tabs */
+    .tabs { display: flex; background: #111827; border-bottom: 1px solid #1E3A5F; }
+    .tab { flex: 1; padding: 12px 6px; background: transparent; border: none; border-bottom: 3px solid transparent; color: rgba(255,255,255,0.35); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.4px; text-transform: uppercase; cursor: pointer; font-family: inherit; transition: all 0.15s; }
+    .tab:hover { color: rgba(255,255,255,0.7); }
+    .tab.active { color: #00D4FF; border-bottom-color: #00D4FF; }
+
+    .body { padding: 16px 20px; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Cards */
+    .card { background: #111827; border: 1px solid #1E3A5F; border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
+    .card.cyan { border-left: 3px solid #00D4FF; }
+    .card.coral { border-left: 3px solid #FF6B6B; }
+    .card.green { border-left: 3px solid #00FF88; }
+    .card.gold { border-left: 3px solid #FFD700; }
+    .card.sky { border-left: 3px solid #48CAE4; }
+    .card-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: #8899AA; margin-bottom: 10px; }
+
+    /* Tags */
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 0.65rem; font-weight: 700; margin-right: 3px; }
+    .tag.green { background: #0A2A1A; color: #00FF88; border: 1px solid #00FF8844; }
+    .tag.cyan { background: #0A2A3A; color: #00D4FF; border: 1px solid #00D4FF44; }
+    .tag.coral { background: #2A0A0A; color: #FF6B6B; border: 1px solid #FF6B6B44; }
+    .tag.gold { background: #2A2000; color: #FFD700; border: 1px solid #FFD70044; }
+    .tag.grey { background: #1A1A2A; color: #8899AA; border: 1px solid #8899AA44; }
+    .tag.sky { background: #0A1A2A; color: #48CAE4; border: 1px solid #48CAE444; }
+
+    /* Rows */
+    .row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid #1E3A5F; font-size: 0.85rem; }
+    .row:last-child { border-bottom: none; }
+
+    /* Tool links */
+    .tool-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #1E3A5F; }
+    .tool-row:last-child { border-bottom: none; }
+    .tool-name { font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .dot.live { background: #00FF88; box-shadow: 0 0 6px #00FF88; }
+    .dot.pending { background: #FFD700; }
+    .open-btn { font-size: 0.7rem; color: #00D4FF; font-weight: 700; border: 1px solid #00D4FF44; padding: 3px 10px; border-radius: 5px; text-decoration: none; white-space: nowrap; }
+    .open-btn:hover { background: #00D4FF; color: #0A0E1A; }
+
+    /* Build queue rows */
+    .q-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #1E3A5F; }
+    .q-row:last-child { border-bottom: none; }
+    .q-num { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.68rem; font-weight: 700; flex-shrink: 0; }
+    .q-num.done { background: #00FF88; color: #0A0E1A; }
+    .q-num.active { background: #FF6B6B; color: white; }
+    .q-num.next { background: #00D4FF; color: #0A0E1A; }
+    .q-num.pending { background: #1E3A5F; color: #8899AA; }
+    .q-label { flex: 1; font-size: 0.82rem; }
+    .q-label.done { text-decoration: line-through; opacity: 0.4; }
+
+    /* Agent mini cards */
+    .agent-grid { display: flex; flex-wrap: wrap; gap: 6px; }
+    .agent-mini { background: #0A0E1A; border: 1px solid #1E3A5F; border-radius: 6px; padding: 6px 10px; font-size: 0.75rem; min-width: 90px; }
+    .agent-mini .a-name { font-weight: 700; }
+    .agent-mini .a-role { font-size: 0.62rem; color: #8899AA; margin-top: 1px; }
+
+    /* Timer */
+    .timer-display { font-size: 2.5rem; font-weight: 700; color: #00D4FF; text-align: center; text-shadow: 0 0 20px #00D4FF55; font-family: monospace; letter-spacing: 4px; padding: 16px 0; }
+    .timer-display.warning { color: #FFD700; text-shadow: 0 0 20px #FFD70055; }
+    .timer-display.danger { color: #FF6B6B; text-shadow: 0 0 20px #FF6B6B55; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+    .timer-btns { display: flex; gap: 8px; justify-content: center; margin-bottom: 14px; }
+    .btn { padding: 8px 20px; border-radius: 6px; font-size: 0.78rem; font-weight: 700; cursor: pointer; border: none; font-family: inherit; }
+    .btn-cyan { background: #00D4FF; color: #0A0E1A; }
+    .btn-coral { background: #FF6B6B; color: white; }
+    .btn-ghost { background: transparent; color: #8899AA; border: 1px solid #1E3A5F; padding: 8px 18px; font-size: 0.78rem; font-weight: 700; cursor: pointer; border-radius: 6px; font-family: inherit; }
+
+    /* Check in form */
+    input[type=text], textarea { width: 100%; padding: 9px 12px; border: 1px solid #1E3A5F; border-radius: 6px; font-size: 0.85rem; background: #0A0E1A; color: #E8F4FD; font-family: inherit; outline: none; margin-bottom: 8px; }
+    input[type=text]:focus, textarea:focus { border-color: #00D4FF; }
+
+    .save-confirm { background: #0A2A1A; border-left: 3px solid #00FF88; border-radius: 0 6px 6px 0; padding: 8px 14px; margin-bottom: 10px; font-size: 0.82rem; color: #00FF88; display: none; }
+
+    /* Stats */
+    .stat-row { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .stat-box { flex: 1; min-width: 70px; background: #0A0E1A; border: 1px solid #1E3A5F; border-radius: 8px; padding: 10px; text-align: center; }
+    .stat-num { font-size: 1.3rem; font-weight: 700; color: #00D4FF; text-shadow: 0 0 10px #00D4FF55; }
+    .stat-lbl { font-size: 0.6rem; color: #8899AA; text-transform: uppercase; margin-top: 2px; }
+
+    .footer { text-align: center; padding: 16px; font-size: 0.68rem; color: #1E3A5F; border-top: 1px solid #1E3A5F; margin-top: 10px; }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="header">
+    <div class="header-left">
+      <h1>Sizzler Control Centre</h1>
+      <p>Wave, Road & Everything Between · @sizzlerwaveandroad</p>
+    </div>
+    <div class="header-right">
+      <button class="fs-btn" onclick="toggleFS()">⛶ Full Screen</button>
+    </div>
+  </div>
+
+  <div class="constitution">
+    "To live fully, document honestly, help others reach their potential, and build a system that generates lasting value — for Siz, for others, and for the world."
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('dashboard')">Dashboard</button>
+    <button class="tab" onclick="switchTab('buildops')">Build Ops</button>
+    <button class="tab" onclick="switchTab('capture')">Capture</button>
+    <button class="tab" onclick="switchTab('checkin')">Check In</button>
+  </div>
+
+  <div class="body">
+
+    <!-- DASHBOARD -->
+    <div id="tab-dashboard" class="tab-content active">
+
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-num">6</div><div class="stat-lbl">Live Tools</div></div>
+        <div class="stat-box"><div class="stat-num">17</div><div class="stat-lbl">Agents</div></div>
+        <div class="stat-box"><div class="stat-num">4</div><div class="stat-lbl">Phases</div></div>
+        <div class="stat-box"><div class="stat-num">3</div><div class="stat-lbl">Remaining</div></div>
+      </div>
+
+      <!-- Live Tools -->
+      <div class="card green">
+        <div class="card-title">Live Tools — Click to Open</div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Claude</div><a href="https://claude.ai" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Jarvis V3</div><a href="https://sizzler-jarvis-v3.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Builder's Log</div><a href="https://sizzler-builderslog-3zno.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Skills Register</div><a href="https://sizzler-skillsregister.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Ideas Capture</div><a href="https://sizzler-ideas.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Architecture Map</div><a href="https://sizzler-archmap.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name"><div class="dot live"></div>Gantt Chart</div><a href="https://1drv.ms/x/c/58b0cd7e7aac633d/IQC7Y_ZJ3AibSZaF8I42zN6OAVEQE3oQ2B6WmKyYweVhq_w?e=aKLnr5" target="_blank" class="open-btn">Open →</a></div>
+      </div>
+
+      <!-- Agent Map -->
+      <div class="card cyan">
+        <div class="card-title">Agent Roster — 17 Agents (Click Architecture Map for full interactive view)</div>
+        <div class="agent-grid">
+          <div class="agent-mini" style="border-left:2px solid #00D4FF"><div class="a-name" style="color:#00D4FF">Jarvis</div><div class="a-role">Command Centre</div></div>
+          <div class="agent-mini" style="border-left:2px solid #00FF88"><div class="a-name" style="color:#00FF88">Siz</div><div class="a-role">Creative Director</div></div>
+          <div class="agent-mini" style="border-left:2px solid #FF6B6B"><div class="a-name" style="color:#FF6B6B">Ellis</div><div class="a-role">Gatekeeper</div></div>
+          <div class="agent-mini" style="border-left:2px solid #00FF88"><div class="a-name" style="color:#00FF88">Rex</div><div class="a-role">Database ✅</div></div>
+          <div class="agent-mini" style="border-left:2px solid #FFD700"><div class="a-name" style="color:#FFD700">Ada</div><div class="a-role">Doc Control</div></div>
+          <div class="agent-mini" style="border-left:2px solid #00D4FF"><div class="a-name" style="color:#00D4FF">Maya</div><div class="a-role">Writer</div></div>
+          <div class="agent-mini" style="border-left:2px solid #FF6B6B"><div class="a-name" style="color:#FF6B6B">Knox</div><div class="a-role">Security ⚫TBD</div></div>
+          <div class="agent-mini" style="border-left:2px solid #FF6B6B"><div class="a-name" style="color:#FF6B6B">Sage</div><div class="a-role">Diagnostic ⚫TBD</div></div>
+          <div class="agent-mini" style="border-left:2px solid #FF6B6B"><div class="a-name" style="color:#FF6B6B">Interp</div><div class="a-role">Layer ⚫TBD</div></div>
+          <div class="agent-mini" style="border-left:2px solid #8899AA;opacity:0.6"><div class="a-name" style="color:#8899AA">Scout</div><div class="a-role">Web Intel Ph2</div></div>
+          <div class="agent-mini" style="border-left:2px solid #FF6B6B;opacity:0.7"><div class="a-name" style="color:#FF6B6B">Cleo</div><div class="a-role">Media ⚫TBD</div></div>
+          <div class="agent-mini" style="border-left:2px solid #8899AA;opacity:0.6"><div class="a-name" style="color:#8899AA">Ray</div><div class="a-role">Audio Ph2</div></div>
+          <div class="agent-mini" style="border-left:2px solid #8899AA;opacity:0.6"><div class="a-name" style="color:#8899AA">Finn</div><div class="a-role">Video Ph2</div></div>
+          <div class="agent-mini" style="border-left:2px solid #8899AA;opacity:0.6"><div class="a-name" style="color:#8899AA">Marco</div><div class="a-role">Products Ph2</div></div>
+          <div class="agent-mini" style="border-left:2px solid #8899AA;opacity:0.6"><div class="a-name" style="color:#8899AA">Leo</div><div class="a-role">Contracts Ph2</div></div>
+          <div class="agent-mini" style="border-left:2px solid #8899AA;opacity:0.6"><div class="a-name" style="color:#8899AA">Vera</div><div class="a-role">Legal Ph2</div></div>
+          <div class="agent-mini" style="border-left:2px solid #8899AA;opacity:0.6;border-style:dashed"><div class="a-name" style="color:#8899AA">Web/UI</div><div class="a-role">Dev Agent Ph3</div></div>
+        </div>
+      </div>
+
+      <!-- Design Principles -->
+      <div class="card coral">
+        <div class="card-title">Four Design Principles — Test Every Build</div>
+        <div class="row"><span class="tag coral">1</span><span style="font-size:0.85rem">Does it make sense?</span></div>
+        <div class="row"><span class="tag coral">2</span><span style="font-size:0.85rem">Can we make it more efficient?</span></div>
+        <div class="row"><span class="tag coral">3</span><span style="font-size:0.85rem">Does it feel intuitive?</span></div>
+        <div class="row"><span class="tag coral">4</span><span style="font-size:0.85rem">What phase does this belong to — and are we in that phase yet?</span></div>
+      </div>
+
+    </div>
+
+    <!-- BUILD OPS -->
+    <div id="tab-buildops" class="tab-content">
+
+      <!-- Phase gate -->
+      <div class="card cyan">
+        <div class="card-title">Phase Gate — Ask before every build</div>
+        <p style="font-size:0.85rem;color:#E8F4FD;line-height:1.6">What phase does this belong to — and are we in that phase yet? If Phase 2 or later — <strong style="color:#FF6B6B">TBD register or Ideas. No discussion. No detour.</strong></p>
+      </div>
+
+      <!-- Phase 1 remaining -->
+      <div class="card" style="border-left:3px solid #00FF88">
+        <div class="card-title" style="color:#00FF88">Phase 1 — Design Tools (3 items remaining)</div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Control Centre</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Builder's Log</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Gantt Chart v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Agent Register v1.4</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Business Plan v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Architecture Blueprint v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Concept Drawing v1.0</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Skills Register</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Architecture Map</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num done">✓</div><div class="q-label done">Ideas Capture</div><span class="tag green">Done</span></div>
+        <div class="q-row"><div class="q-num active">1</div><div class="q-label">Jarvis Definition Document — compile from existing docs</div><span class="tag coral">Next</span></div>
+        <div class="q-row"><div class="q-num next">2</div><div class="q-label">TBD Resolution Session — Agent Register v1.5</div><span class="tag cyan">Next</span></div>
+        <div class="q-row"><div class="q-num pending">3</div><div class="q-label">Backup Protocol — 06_Tools/Backup/ JSON exports</div><span class="tag grey">Pending</span></div>
+      </div>
+
+      <!-- Phase 2 -->
+      <div class="card" style="border-left:3px solid #00D4FF">
+        <div class="card-title" style="color:#00D4FF">Phase 2 — Build (starts when Phase 1 complete)</div>
+        <div class="q-row"><div class="q-num pending">1</div><div class="q-label">Activate Ada — document control</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">2</div><div class="q-label">Activate Maya — writer</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">3</div><div class="q-label">Knox — security layer</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">4</div><div class="q-label">Sage — diagnostic and goals</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">5</div><div class="q-label">Interpretation Layer</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">6</div><div class="q-label">Voice interface — conversational Jarvis</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">7</div><div class="q-label">Jarvis entry portal — five enterprise types</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">8</div><div class="q-label">Scout — web intelligence</div><span class="tag cyan">Phase 2</span></div>
+        <div class="q-row"><div class="q-num pending">9</div><div class="q-label">Morning briefing system</div><span class="tag cyan">Phase 2</span></div>
+      </div>
+
+      <!-- Phase 3 & 4 summary -->
+      <div class="card" style="border-left:3px solid #FFD700">
+        <div class="card-title" style="color:#FFD700">Phase 3 — Beta Launch & Test</div>
+        <div class="row"><span style="font-size:0.82rem;color:#8899AA">ANT as first client · Cleo processes Bali media · Content launch · Web/UI Agent · NZ Guide · Patreon</span></div>
+      </div>
+      <div class="card" style="border-left:3px solid #FF6B6B">
+        <div class="card-title" style="color:#FF6B6B">Phase 4 — Live Launch</div>
+        <div class="row"><span style="font-size:0.82rem;color:#8899AA">Jarvis licensable · Hardware upgrade · PWA · Visual flow map · Scales globally</span></div>
+      </div>
+
+      <!-- Key links -->
+      <div class="card">
+        <div class="card-title">Build Reference Links</div>
+        <div class="tool-row"><div class="tool-name">Architecture Map</div><a href="https://sizzler-archmap.vercel.app/" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name">Gantt Chart</div><a href="https://1drv.ms/x/c/58b0cd7e7aac633d/IQC7Y_ZJ3AibSZaF8I42zN6OAVEQE3oQ2B6WmKyYweVhq_w?e=aKLnr5" target="_blank" class="open-btn">Open →</a></div>
+        <div class="tool-row"><div class="tool-name">Agent Register v1.4</div><span style="font-size:0.75rem;color:#8899AA">03_Jarvis/Docs/ on OneDrive</span></div>
+      </div>
+
+    </div>
+
+    <!-- CAPTURE -->
+    <div id="tab-capture" class="tab-content">
+
+      <div class="card cyan">
+        <div class="card-title">Your learning and pathway capture tools</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:14px">These are YOUR tools — capturing what you learn, what surfaces, what needs to be remembered. Not build tools. Capture tools.</p>
+      </div>
+
+      <div class="card green">
+        <div class="card-title">Ideas Capture</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:10px">Idea surfaces mid-session → capture it here → stay in the lane. Categorised by type and phase. Never lost.</p>
+        <a href="https://sizzler-ideas.vercel.app/" target="_blank" style="display:block;background:#00D4FF;color:#0A0E1A;padding:9px 18px;border-radius:6px;text-decoration:none;font-size:0.82rem;font-weight:700;text-align:center;margin-bottom:8px">Open Ideas Capture →</a>
+      </div>
+
+      <div class="card gold">
+        <div class="card-title">Skills Register</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:10px">Claude skills, prompts, build techniques — captured as you learn. Say "log that as a skill" during any session.</p>
+        <a href="https://sizzler-skillsregister.vercel.app/" target="_blank" style="display:block;background:#FFD700;color:#0A0E1A;padding:9px 18px;border-radius:6px;text-decoration:none;font-size:0.82rem;font-weight:700;text-align:center;margin-bottom:8px">Open Skills Register →</a>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Builder's Log — Session IP Record</div>
+        <p style="font-size:0.82rem;color:#8899AA;margin-bottom:10px">Log every session before closing. IP timestamp via Git commit reference. Permanent verifiable build history.</p>
+        <a href="https://sizzler-builderslog-3zno.vercel.app/" target="_blank" style="display:block;background:#48CAE4;color:#0A0E1A;padding:9px 18px;border-radius:6px;text-decoration:none;font-size:0.82rem;font-weight:700;text-align:center">Open Builder's Log →</a>
+      </div>
+
+      <div class="card coral">
+        <div class="card-title">The Lane Rule — Non-Negotiable</div>
+        <div class="row"><span style="font-size:0.85rem">Capturing is NOT building. Capture it → close it → return to the lane.</span></div>
+        <div class="row"><span style="font-size:0.85rem">One task per session. No exceptions.</span></div>
+        <div class="row"><span style="font-size:0.85rem">Drift detected → "Park it or stay in the lane?"</span></div>
+      </div>
+
+    </div>
+
+    <!-- CHECK IN -->
+    <div id="tab-checkin" class="tab-content">
+
+      <!-- Session Timer -->
+      <div class="card cyan">
+        <div class="card-title">Session Timer — 2 hour maximum</div>
+        <div class="timer-display" id="timer">00:00</div>
+        <div class="timer-btns">
+          <button class="btn btn-cyan" onclick="startTimer()">Start Session</button>
+          <button class="btn btn-ghost" onclick="resetTimer()">Reset</button>
+        </div>
+        <div id="timer-status" style="text-align:center;font-size:0.78rem;color:#8899AA;margin-bottom:8px">Session not started</div>
+      </div>
+
+      <!-- Check In -->
+      <div class="card green">
+        <div class="card-title">Session Check In — Lock the single lane</div>
+        <div id="checkin-saved" style="display:none">
+          <div style="font-size:1rem;font-weight:700;color:#00D4FF" id="checkin-text"></div>
+          <div style="font-size:0.72rem;color:#8899AA;margin-top:4px" id="checkin-time"></div>
+          <button class="btn-ghost" style="margin-top:8px;font-size:0.7rem;padding:4px 10px" onclick="resetCheckin()">Reset</button>
+        </div>
+        <div id="checkin-form">
+          <input type="text" id="checkin-input" placeholder="Today's single lane focus..." />
+          <button class="btn btn-cyan" onclick="saveCheckin()">Check Me In</button>
+        </div>
+      </div>
+
+      <!-- Before you start -->
+      <div class="card">
+        <div class="card-title">Before You Start — Lane Check</div>
+        <div class="row"><span class="tag cyan">1</span><span style="font-size:0.85rem">Is today's task on the Build Ops queue?</span></div>
+        <div class="row"><span class="tag cyan">2</span><span style="font-size:0.85rem">Does it serve the constitution?</span></div>
+        <div class="row"><span class="tag cyan">3</span><span style="font-size:0.85rem">Does it pass the four design principles?</span></div>
+        <div class="row"><span class="tag cyan">4</span><span style="font-size:0.85rem">Is it Phase 1 — and are we in Phase 1?</span></div>
+      </div>
+
+      <!-- Current priority -->
+      <div class="card coral">
+        <div class="card-title">Current Priority — Phase 1 Remaining</div>
+        <div class="row"><span class="tag coral">1</span><span style="font-size:0.85rem">Jarvis Definition Document — compile from existing docs</span></div>
+        <div class="row"><span class="tag cyan">2</span><span style="font-size:0.85rem">TBD Resolution Session — Agent Register v1.5</span></div>
+        <div class="row"><span class="tag grey">3</span><span style="font-size:0.85rem">Backup Protocol — JSON exports every session</span></div>
+      </div>
+
+      <!-- End of session -->
+      <div class="card gold">
+        <div class="card-title">End of Session Protocol</div>
+        <div class="row"><span class="tag gold">1</span><span style="font-size:0.85rem">Log session in Builder's Log</span></div>
+        <div class="row"><span class="tag gold">2</span><span style="font-size:0.85rem">Export Builder's Log JSON → 06_Tools/Backup/</span></div>
+        <div class="row"><span class="tag gold">3</span><span style="font-size:0.85rem">Export Skills Register JSON → 06_Tools/Backup/</span></div>
+        <div class="row"><span class="tag gold">4</span><span style="font-size:0.85rem">Export Rex profile JSON → 06_Tools/Backup/</span></div>
+        <div class="row"><span class="tag gold">5</span><span style="font-size:0.85rem">Update Gantt — Status and Progress %</span></div>
+        <div class="row"><span class="tag gold">6</span><span style="font-size:0.85rem">Email new docs to self — IP timestamp</span></div>
+        <div class="row"><span class="tag gold">7</span><span style="font-size:0.85rem">Close laptop — rest</span></div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div class="footer">
+    Sizzler Control Centre v5 · @sizzlerwaveandroad · Strategic framework: Wilson & Gilligan<br>
+    Owner: Siz (Keith Boyd) · Built in Phase 1 · Final version
+  </div>
+
+</div>
+
+<script>
+// Tab switching
+function switchTab(id) {
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c){ c.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+}
+
+// Full screen
+function toggleFS() {
+  if (!document.fullscreenElement) { document.documentElement.requestFullscreen(); }
+  else { document.exitFullscreen(); }
+}
+
+// Check in
+function saveCheckin() {
+  var val = document.getElementById('checkin-input').value.trim();
+  if (!val) return;
+  var now = new Date();
+  var timeStr = now.toLocaleTimeString('en-NZ',{hour:'2-digit',minute:'2-digit'}) + ' · ' + now.toLocaleDateString('en-NZ',{day:'numeric',month:'short',year:'numeric'});
+  document.getElementById('checkin-text').textContent = '⚡ ' + val;
+  document.getElementById('checkin-time').textContent = 'Checked in: ' + timeStr;
+  document.getElementById('checkin-form').style.display = 'none';
+  document.getElementById('checkin-saved').style.display = 'block';
+}
+function resetCheckin() {
+  document.getElementById('checkin-input').value = '';
+  document.getElementById('checkin-form').style.display = 'block';
+  document.getElementById('checkin-saved').style.display = 'none';
+}
+
+// Timer
+var timerInterval = null;
+var timerSeconds = 0;
+var timerRunning = false;
+
+function startTimer() {
+  if (timerRunning) return;
+  timerRunning = true;
+  document.getElementById('timer-status').textContent = 'Session running — 90 min flag · 2 hour hard stop';
+  timerInterval = setInterval(function() {
+    timerSeconds++;
+    var h = Math.floor(timerSeconds / 3600);
+    var m = Math.floor((timerSeconds % 3600) / 60);
+    var s = timerSeconds % 60;
+    var display = (h > 0 ? String(h).padStart(2,'0') + ':' : '') + String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+    var el = document.getElementById('timer');
+    el.textContent = display;
+    // 90 min warning
+    if (timerSeconds === 5400) {
+      el.className = 'timer-display warning';
+      document.getElementById('timer-status').textContent = '⚠️ 90 MINUTE FLAG — Start wrapping up';
+    }
+    // 2 hour hard stop
+    if (timerSeconds === 7200) {
+      el.className = 'timer-display danger';
+      document.getElementById('timer-status').textContent = '🛑 2 HOUR HARD STOP — Save and close now';
+      clearInterval(timerInterval);
+      timerRunning = false;
+    }
+  }, 1000);
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  timerRunning = false;
+  timerSeconds = 0;
+  document.getElementById('timer').textContent = '00:00';
+  document.getElementById('timer').className = 'timer-display';
+  document.getElementById('timer-status').textContent = 'Session not started';
+}
+</script>
+
+</body>
+</html>
