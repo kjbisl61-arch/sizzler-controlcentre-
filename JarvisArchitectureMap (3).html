@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Jarvis — Architecture Map</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:#0A0E1A;color:#E8F4FD;min-height:100vh;overflow:hidden}
+.header{background:linear-gradient(135deg,#0A2A4A,#0A0E1A);padding:10px 16px;border-bottom:1px solid #1E3A5F;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.header-left{display:flex;align-items:center;gap:12px}
+.back-btn{background:#111827;border:1px solid #1E3A5F;color:#00D4FF;padding:5px 12px;border-radius:6px;font-size:.72rem;font-weight:700;text-decoration:none;white-space:nowrap}
+.back-btn:hover{background:#00D4FF;color:#0A0E1A}
+.header h1{font-size:1rem;font-weight:700;color:#00D4FF}
+.header p{font-size:.72rem;color:#8899AA;font-style:italic}
+.header-right{display:flex;gap:8px}
+.hbtn{background:#111827;border:1px solid #1E3A5F;color:#00FF88;padding:5px 12px;border-radius:6px;font-size:.72rem;font-weight:700;cursor:pointer;font-family:inherit}
+.hbtn:hover{background:#00FF88;color:#0A0E1A}
+.hbtn.violet{color:#B388FF}.hbtn.violet:hover{background:#B388FF;color:#0A0E1A}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:6px 16px;background:#111827;border-bottom:1px solid #1E3A5F}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:.66rem;color:#8899AA}
+.leg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.leg-line{width:16px;height:0;border-top:2px solid;flex-shrink:0}
+.map-container{position:relative;width:100%;overflow:hidden}
+svg.lines{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none}
+.node{position:absolute;transform:translate(-50%,-50%);cursor:pointer;z-index:10;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;border:2px solid;transition:box-shadow .15s}
+.node:hover{z-index:50}
+.node .n-code{font-weight:700;line-height:1.05;text-align:center}
+.node .n-lc{font-size:.5rem;opacity:.75;margin-top:1px}
+.node-hub{background:linear-gradient(135deg,#0A2A4A,#0077B6);border:3px solid #00D4FF;box-shadow:0 0 30px #00D4FF44}
+.node-hub .n-code{color:#00D4FF}
+.s-draft{background:#0A2A3A;border-color:#00D4FF}.s-draft .n-code{color:#00D4FF}
+.s-progress{background:#2A2000;border-color:#FFD700}.s-progress .n-code{color:#FFD700}
+.s-tbd{background:#2A0A0A;border-color:#FF6B6B}.s-tbd .n-code{color:#FF6B6B}
+.s-parked{background:#1A1A2A;border-color:#8899AA;opacity:.65}.s-parked .n-code{color:#8899AA}
+.node.knox-ring{box-shadow:0 0 0 3px #F4A26155,0 0 18px #F4A26144}
+.tip{position:absolute;z-index:100;background:#111827;border:1px solid #1E3A5F;border-radius:8px;padding:7px 11px;font-size:.72rem;pointer-events:none;display:none;max-width:240px;box-shadow:0 4px 16px #00000088}
+.tip b{color:#00D4FF}.tip .t-sub{color:#8899AA;font-size:.64rem;margin-top:2px}
+.phase-bar{display:flex;border-top:1px solid #1E3A5F}
+.phase-item{flex:1;padding:6px 8px;text-align:center;border-right:1px solid #1E3A5F}
+.phase-item:last-child{border-right:none}
+.phase-num{font-size:.65rem;font-weight:700;text-transform:uppercase}
+.phase-name{font-size:.68rem;margin-top:1px;color:#8899AA}
+.p1 .phase-num{color:#00FF88}.p2 .phase-num{color:#00D4FF}.p3 .phase-num{color:#FFD700}.p4 .phase-num{color:#FF6B6B}
+.modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:200;align-items:center;justify-content:center}
+.modal.open{display:flex}
+.modal-box{background:#111827;border:1px solid #1E3A5F;border-radius:12px;padding:20px 24px;max-width:540px;width:92%;position:relative;max-height:82vh;overflow-y:auto}
+.modal-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#8899AA;font-size:1.2rem;cursor:pointer}
+.modal-title{font-size:1.05rem;font-weight:700;margin-bottom:2px}
+.modal-role{font-size:.78rem;color:#8899AA;margin-bottom:12px}
+.msec{margin-bottom:10px}
+.mlabel{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:#8899AA;margin-bottom:3px}
+.mtext{font-size:.8rem;line-height:1.55}
+table.reg{width:100%;border-collapse:collapse;font-size:.72rem}
+table.reg th,table.reg td{border:1px solid #1E3A5F;padding:4px 8px;text-align:left}
+table.reg th{background:#0A2A3A;color:#00D4FF}
+.lnk-id{color:#F4A261;font-weight:700}
+.tag{display:inline-block;padding:2px 8px;border-radius:20px;font-size:.62rem;font-weight:700;border:1px solid;margin-right:4px}
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="header-left">
+    <a href="https://sizzler-controlcentre.vercel.app/" class="back-btn">&larr; Control Centre</a>
+    <div><h1>Jarvis — Architecture Map</h1><p>31 units · 104 links · mirrors Scope of Works Master v1.5 · register LNK-001–112 (8 retired) · hover for names, click for detail</p></div>
+  </div>
+  <div class="header-right">
+    <button class="hbtn violet" onclick="showRegister()">Link Register</button>
+    <button class="hbtn" onclick="toggleFS()">&#x26F6; Full Screen</button>
+  </div>
+</div>
+<div class="legend">
+  <div class="leg-item"><div class="leg-dot" style="background:#00D4FF"></div>Draft</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#FFD700"></div>In Progress</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#FF6B6B"></div>TBD</div>
+  <div class="leg-item"><div class="leg-dot" style="background:#8899AA"></div>Parked Ph4</div>
+  <div class="leg-item"><div class="leg-line" style="border-color:#F4A261"></div>Knox link</div>
+  <div class="leg-item"><div class="leg-line" style="border-color:#00D4FF"></div>Architecture</div>
+  <div class="leg-item"><div class="leg-line" style="border-color:#FF6B6B"></div>Interface</div>
+  <div class="leg-item"><div class="leg-line" style="border-color:#00FF88"></div>Toolkit</div>
+  <div class="leg-item"><div class="leg-line" style="border-color:#B388FF"></div>Agent Fit-out</div>
+  <div class="leg-item">Node size = link count</div>
+</div>
+<div class="map-container" id="map"><svg class="lines" id="svg-lines"></svg></div>
+<div class="tip" id="tip"></div>
+<div class="phase-bar">
+  <div class="phase-item p1"><div class="phase-num">Phase 1</div><div class="phase-name">Serve Siz &#x2705;</div></div>
+  <div class="phase-item p2"><div class="phase-num">Phase 2</div><div class="phase-name">Design — current</div></div>
+  <div class="phase-item p3"><div class="phase-num">Phase 3</div><div class="phase-name">Build &amp; Beta</div></div>
+  <div class="phase-item p4"><div class="phase-num">Phase 4</div><div class="phase-name">Launch</div></div>
+</div>
+<div class="modal" id="modal"><div class="modal-box">
+  <button class="modal-close" onclick="closeModal()">&#x2715;</button>
+  <div class="modal-title" id="m-title"></div>
+  <div class="modal-role" id="m-role"></div>
+  <div id="m-body"></div>
+</div></div>
+<script>
+var DATA = {"nodes":[{"code":"ARCH-01","name":"Jarvis Hub","full":"Jarvis Hub","trade":"Architecture","status":"Draft","sclass":"draft","priority":"High","links":29,"tier":1,"notes":[],"conns":[{"id":"LNK-001","other":"ARCH-02","new":false},{"id":"LNK-002","other":"ARCH-03","new":false},{"id":"LNK-003","other":"INT-01","new":false},{"id":"LNK-004","other":"INT-02","new":false},{"id":"LNK-005","other":"INT-03","new":false},{"id":"LNK-006","other":"INT-05","new":false},{"id":"LNK-007","other":"AGT-01","new":false},{"id":"LNK-008","other":"AGT-02","new":false},{"id":"LNK-009","other":"AGT-03","new":false},{"id":"LNK-078","other":"ARCH-04","new":true},{"id":"LNK-079","other":"ARCH-05","new":true},{"id":"LNK-080","other":"TOOL-01","new":true},{"id":"LNK-081","other":"TOOL-02","new":true},{"id":"LNK-082","other":"TOOL-03","new":true},{"id":"LNK-083","other":"TOOL-04","new":true},{"id":"LNK-084","other":"TOOL-05","new":true},{"id":"LNK-085","other":"TOOL-06","new":true},{"id":"LNK-086","other":"TOOL-07","new":true},{"id":"LNK-087","other":"TOOL-08","new":true},{"id":"LNK-092","other":"AGT-05","new":true},{"id":"LNK-094","other":"AGT-06","new":true},{"id":"LNK-096","other":"AGT-07","new":true},{"id":"LNK-099","other":"AGT-08","new":true},{"id":"LNK-101","other":"AGT-09","new":true},{"id":"LNK-103","other":"AGT-10","new":true},{"id":"LNK-105","other":"AGT-11","new":true},{"id":"LNK-107","other":"AGT-12","new":true},{"id":"LNK-109","other":"AGT-13","new":true},{"id":"LNK-111","other":"AGT-14","new":true}]},{"code":"ARCH-02","name":"Rex","full":"Rex \u2014 Database and Storage","trade":"Architecture","status":"In Progress","sclass":"progress","priority":"High","links":14,"tier":3,"notes":[],"conns":[{"id":"LNK-001","other":"ARCH-01","new":false},{"id":"LNK-010","other":"ARCH-03","new":false},{"id":"LNK-011","other":"AGT-01","new":false},{"id":"LNK-012","other":"AGT-02","new":false},{"id":"LNK-013","other":"AGT-05","new":false},{"id":"LNK-014","other":"AGT-06","new":false},{"id":"LNK-015","other":"TOOL-03","new":false},{"id":"LNK-016","other":"ARCH-04","new":false},{"id":"LNK-030","other":"INT-03","new":false},{"id":"LNK-034","other":"INT-04","new":false},{"id":"LNK-038","other":"INT-05","new":false},{"id":"LNK-043","other":"TOOL-02","new":false},{"id":"LNK-048","other":"TOOL-04","new":false},{"id":"LNK-097","other":"AGT-07","new":true}]},{"code":"ARCH-03","name":"Knox","full":"Knox \u2014 Security Layer","trade":"Architecture","status":"TBD","sclass":"tbd","priority":"High \u2014 FIXED POINT \u2014 incl. former AGT-04 persona (merged 3 Jul 2026)","links":26,"tier":3,"notes":["> ALL units \u2014 Knox sits between every connection and the hub"],"conns":[{"id":"LNK-002","other":"ARCH-01","new":false},{"id":"LNK-010","other":"ARCH-02","new":false},{"id":"LNK-017","other":"ARCH-04","new":false},{"id":"LNK-023","other":"INT-01","new":false},{"id":"LNK-026","other":"INT-02","new":false},{"id":"LNK-031","other":"INT-03","new":false},{"id":"LNK-035","other":"INT-04","new":false},{"id":"LNK-039","other":"INT-05","new":false},{"id":"LNK-042","other":"TOOL-01","new":false},{"id":"LNK-046","other":"TOOL-03","new":false},{"id":"LNK-049","other":"TOOL-05","new":false},{"id":"LNK-050","other":"TOOL-06","new":false},{"id":"LNK-057","other":"TOOL-08","new":false},{"id":"LNK-088","other":"AGT-01","new":true},{"id":"LNK-089","other":"AGT-02","new":true},{"id":"LNK-090","other":"AGT-03","new":true},{"id":"LNK-093","other":"AGT-05","new":true},{"id":"LNK-095","other":"AGT-06","new":true},{"id":"LNK-098","other":"AGT-07","new":true},{"id":"LNK-100","other":"AGT-08","new":true},{"id":"LNK-102","other":"AGT-09","new":true},{"id":"LNK-104","other":"AGT-10","new":true},{"id":"LNK-106","other":"AGT-11","new":true},{"id":"LNK-108","other":"AGT-12","new":true},{"id":"LNK-110","other":"AGT-13","new":true},{"id":"LNK-112","other":"AGT-14","new":true}]},{"code":"ARCH-04","name":"Interp Layer","full":"Interpretation Layer","trade":"Architecture","status":"TBD","sclass":"tbd","priority":"High","links":6,"tier":3,"notes":[],"conns":[{"id":"LNK-016","other":"ARCH-02","new":false},{"id":"LNK-017","other":"ARCH-03","new":false},{"id":"LNK-018","other":"AGT-01","new":false},{"id":"LNK-019","other":"AGT-02","new":false},{"id":"LNK-020","other":"AGT-03","new":false},{"id":"LNK-078","other":"ARCH-01","new":true}]},{"code":"ARCH-05","name":"Connection Map","full":"Agent Connection Map","trade":"Architecture","status":"Draft","sclass":"draft","priority":"Medium","links":1,"tier":3,"notes":["> ALL units \u2014 visual representation of all connections"],"conns":[{"id":"LNK-079","other":"ARCH-01","new":true}]},{"code":"INT-01","name":"Voice","full":"Voice Interface","trade":"Interface","status":"TBD","sclass":"tbd","priority":"High","links":4,"tier":3,"notes":[],"conns":[{"id":"LNK-003","other":"ARCH-01","new":false},{"id":"LNK-021","other":"INT-02","new":false},{"id":"LNK-022","other":"INT-03","new":false},{"id":"LNK-023","other":"ARCH-03","new":false}]},{"code":"INT-02","name":"Entry Portal","full":"Entry Portal \u2014 Five Enterprise Types","trade":"Interface","status":"Draft","sclass":"draft","priority":"High","links":6,"tier":3,"notes":[],"conns":[{"id":"LNK-004","other":"ARCH-01","new":false},{"id":"LNK-021","other":"INT-01","new":false},{"id":"LNK-024","other":"INT-03","new":false},{"id":"LNK-025","other":"INT-04","new":false},{"id":"LNK-026","other":"ARCH-03","new":false},{"id":"LNK-052","other":"TOOL-07","new":false}]},{"code":"INT-03","name":"Dashboard","full":"User Interaction Dashboard","trade":"Interface","status":"Draft","sclass":"draft","priority":"High","links":9,"tier":3,"notes":[],"conns":[{"id":"LNK-005","other":"ARCH-01","new":false},{"id":"LNK-022","other":"INT-01","new":false},{"id":"LNK-024","other":"INT-02","new":false},{"id":"LNK-027","other":"AGT-01","new":false},{"id":"LNK-028","other":"AGT-02","new":false},{"id":"LNK-029","other":"AGT-03","new":false},{"id":"LNK-030","other":"ARCH-02","new":false},{"id":"LNK-031","other":"ARCH-03","new":false},{"id":"LNK-053","other":"TOOL-07","new":false}]},{"code":"INT-04","name":"BI Intake","full":"Business Intelligence Intake","trade":"Interface","status":"Draft","sclass":"draft","priority":"High","links":5,"tier":3,"notes":[],"conns":[{"id":"LNK-025","other":"INT-02","new":false},{"id":"LNK-033","other":"AGT-01","new":false},{"id":"LNK-034","other":"ARCH-02","new":false},{"id":"LNK-035","other":"ARCH-03","new":false},{"id":"LNK-066","other":"AGT-05","new":false}]},{"code":"INT-05","name":"Morning Brief","full":"Morning Briefing System","trade":"Interface","status":"Draft","sclass":"draft","priority":"Medium","links":5,"tier":3,"notes":[],"conns":[{"id":"LNK-006","other":"ARCH-01","new":false},{"id":"LNK-037","other":"AGT-01","new":false},{"id":"LNK-038","other":"ARCH-02","new":false},{"id":"LNK-039","other":"ARCH-03","new":false},{"id":"LNK-067","other":"AGT-06","new":false}]},{"code":"TOOL-01","name":"Payments","full":"Payment Processing","trade":"Toolkit","status":"Draft","sclass":"draft","priority":"High","links":4,"tier":3,"notes":[],"conns":[{"id":"LNK-040","other":"AGT-11","new":false},{"id":"LNK-042","other":"ARCH-03","new":false},{"id":"LNK-073","other":"AGT-12","new":false},{"id":"LNK-080","other":"ARCH-01","new":true}]},{"code":"TOOL-02","name":"MRP","full":"MRP \u2014 Resource Planning","trade":"Toolkit","status":"Draft","sclass":"draft","priority":"Medium","links":3,"tier":3,"notes":[],"conns":[{"id":"LNK-043","other":"ARCH-02","new":false},{"id":"LNK-044","other":"AGT-01","new":false},{"id":"LNK-081","other":"ARCH-01","new":true}]},{"code":"TOOL-03","name":"Ada's Library","full":"Ada's Library \u2014 Second Brain","trade":"Toolkit","status":"Draft","sclass":"draft","priority":"High","links":4,"tier":3,"notes":[],"conns":[{"id":"LNK-015","other":"ARCH-02","new":false},{"id":"LNK-046","other":"ARCH-03","new":false},{"id":"LNK-058","other":"AGT-01","new":false},{"id":"LNK-082","other":"ARCH-01","new":true}]},{"code":"TOOL-04","name":"Backup","full":"Backup and Export System","trade":"Toolkit","status":"Draft","sclass":"draft","priority":"High","links":3,"tier":3,"notes":[],"conns":[{"id":"LNK-047","other":"AGT-01","new":false},{"id":"LNK-048","other":"ARCH-02","new":false},{"id":"LNK-083","other":"ARCH-01","new":true}]},{"code":"TOOL-05","name":"Access Port","full":"Build/Maintenance Access Port","trade":"Toolkit","status":"TBD \u2014 concept drawing required before build","sclass":"tbd","priority":"High","links":3,"tier":3,"notes":["> GitHub (kjbisl61-arch) / Vercel deploy pipeline (external)"],"conns":[{"id":"LNK-049","other":"ARCH-03","new":false},{"id":"LNK-055","other":"TOOL-08","new":false},{"id":"LNK-084","other":"ARCH-01","new":true}]},{"code":"TOOL-06","name":"Ops Console","full":"Production Ops Console","trade":"Toolkit","status":"TBD \u2014 design-last: concept drawing required after client","sclass":"tbd","priority":"High","links":3,"tier":3,"notes":["> Distinct from INT-03 User Interaction Dashboard (client-facing) and Control Centre (build-tracking) \\[LNK-051\\]"],"conns":[{"id":"LNK-050","other":"ARCH-03","new":false},{"id":"LNK-056","other":"TOOL-08","new":false},{"id":"LNK-085","other":"ARCH-01","new":true}]},{"code":"TOOL-07","name":"Client SOP","full":"Client Interface SOP","trade":"Toolkit","status":"Not to be written until Phase 3 (Build & Beta Test) is","sclass":"parked","priority":"Medium","links":4,"tier":3,"notes":[],"conns":[{"id":"LNK-052","other":"INT-02","new":false},{"id":"LNK-053","other":"INT-03","new":false},{"id":"LNK-054","other":"AGT-05","new":false},{"id":"LNK-086","other":"ARCH-01","new":true}]},{"code":"TOOL-08","name":"Mgmt SOP","full":"Management Interface SOP","trade":"Toolkit","status":"Not to be written until Phase 3 (Build & Beta Test) is","sclass":"parked","priority":"Medium","links":4,"tier":3,"notes":[],"conns":[{"id":"LNK-055","other":"TOOL-05","new":false},{"id":"LNK-056","other":"TOOL-06","new":false},{"id":"LNK-057","other":"ARCH-03","new":false},{"id":"LNK-087","other":"ARCH-01","new":true}]},{"code":"AGT-01","name":"Ada","full":"Ada \u2014 Document Control","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"High \u2014 First to activate","links":13,"tier":2,"notes":["> ALL agents"],"conns":[{"id":"LNK-007","other":"ARCH-01","new":false},{"id":"LNK-011","other":"ARCH-02","new":false},{"id":"LNK-018","other":"ARCH-04","new":false},{"id":"LNK-027","other":"INT-03","new":false},{"id":"LNK-033","other":"INT-04","new":false},{"id":"LNK-037","other":"INT-05","new":false},{"id":"LNK-044","other":"TOOL-02","new":false},{"id":"LNK-047","other":"TOOL-04","new":false},{"id":"LNK-058","other":"TOOL-03","new":false},{"id":"LNK-059","other":"AGT-02","new":false},{"id":"LNK-075","other":"AGT-13","new":false},{"id":"LNK-077","other":"AGT-14","new":false},{"id":"LNK-088","other":"ARCH-03","new":true}]},{"code":"AGT-02","name":"Maya","full":"Maya \u2014 Writer","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"High \u2014 Second to activate","links":8,"tier":2,"notes":[],"conns":[{"id":"LNK-008","other":"ARCH-01","new":false},{"id":"LNK-012","other":"ARCH-02","new":false},{"id":"LNK-019","other":"ARCH-04","new":false},{"id":"LNK-028","other":"INT-03","new":false},{"id":"LNK-059","other":"AGT-01","new":false},{"id":"LNK-060","other":"AGT-03","new":false},{"id":"LNK-061","other":"AGT-07","new":false},{"id":"LNK-089","other":"ARCH-03","new":true}]},{"code":"AGT-03","name":"Ellis","full":"Ellis \u2014 Gatekeeper","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"High","links":10,"tier":2,"notes":[],"conns":[{"id":"LNK-009","other":"ARCH-01","new":false},{"id":"LNK-020","other":"ARCH-04","new":false},{"id":"LNK-029","other":"INT-03","new":false},{"id":"LNK-060","other":"AGT-02","new":false},{"id":"LNK-062","other":"AGT-07","new":false},{"id":"LNK-063","other":"AGT-08","new":false},{"id":"LNK-064","other":"AGT-09","new":false},{"id":"LNK-070","other":"AGT-10","new":false},{"id":"LNK-076","other":"AGT-14","new":false},{"id":"LNK-090","other":"ARCH-03","new":true}]},{"code":"AGT-05","name":"Sage","full":"Sage \u2014 Diagnostic","trade":"Agent Fit-out","status":"TBD","sclass":"tbd","priority":"High","links":5,"tier":2,"notes":[],"conns":[{"id":"LNK-013","other":"ARCH-02","new":false},{"id":"LNK-054","other":"TOOL-07","new":false},{"id":"LNK-066","other":"INT-04","new":false},{"id":"LNK-092","other":"ARCH-01","new":true},{"id":"LNK-093","other":"ARCH-03","new":true}]},{"code":"AGT-06","name":"Scout","full":"Scout \u2014 Web Intelligence","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":4,"tier":2,"notes":[],"conns":[{"id":"LNK-014","other":"ARCH-02","new":false},{"id":"LNK-067","other":"INT-05","new":false},{"id":"LNK-094","other":"ARCH-01","new":true},{"id":"LNK-095","other":"ARCH-03","new":true}]},{"code":"AGT-07","name":"Cleo","full":"Cleo \u2014 Media Assets","trade":"Agent Fit-out","status":"TBD","sclass":"tbd","priority":"High","links":7,"tier":2,"notes":[],"conns":[{"id":"LNK-061","other":"AGT-02","new":false},{"id":"LNK-062","other":"AGT-03","new":false},{"id":"LNK-068","other":"AGT-08","new":false},{"id":"LNK-069","other":"AGT-09","new":false},{"id":"LNK-096","other":"ARCH-01","new":true},{"id":"LNK-097","other":"ARCH-02","new":true},{"id":"LNK-098","other":"ARCH-03","new":true}]},{"code":"AGT-08","name":"Ray","full":"Ray \u2014 Audio","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":4,"tier":2,"notes":[],"conns":[{"id":"LNK-063","other":"AGT-03","new":false},{"id":"LNK-068","other":"AGT-07","new":false},{"id":"LNK-099","other":"ARCH-01","new":true},{"id":"LNK-100","other":"ARCH-03","new":true}]},{"code":"AGT-09","name":"Finn","full":"Finn \u2014 Video","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":4,"tier":2,"notes":[],"conns":[{"id":"LNK-064","other":"AGT-03","new":false},{"id":"LNK-069","other":"AGT-07","new":false},{"id":"LNK-101","other":"ARCH-01","new":true},{"id":"LNK-102","other":"ARCH-03","new":true}]},{"code":"AGT-10","name":"Marco","full":"Marco \u2014 Products","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":4,"tier":2,"notes":[],"conns":[{"id":"LNK-070","other":"AGT-03","new":false},{"id":"LNK-071","other":"AGT-11","new":false},{"id":"LNK-103","other":"ARCH-01","new":true},{"id":"LNK-104","other":"ARCH-03","new":true}]},{"code":"AGT-11","name":"Leo","full":"Leo \u2014 Contracts","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":5,"tier":2,"notes":[],"conns":[{"id":"LNK-040","other":"TOOL-01","new":false},{"id":"LNK-071","other":"AGT-10","new":false},{"id":"LNK-074","other":"AGT-13","new":false},{"id":"LNK-105","other":"ARCH-01","new":true},{"id":"LNK-106","other":"ARCH-03","new":true}]},{"code":"AGT-12","name":"Max","full":"Max \u2014 Accounting","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":3,"tier":2,"notes":[],"conns":[{"id":"LNK-073","other":"TOOL-01","new":false},{"id":"LNK-107","other":"ARCH-01","new":true},{"id":"LNK-108","other":"ARCH-03","new":true}]},{"code":"AGT-13","name":"Vera","full":"Vera \u2014 Legal","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":4,"tier":2,"notes":[],"conns":[{"id":"LNK-074","other":"AGT-11","new":false},{"id":"LNK-075","other":"AGT-01","new":false},{"id":"LNK-109","other":"ARCH-01","new":true},{"id":"LNK-110","other":"ARCH-03","new":true}]},{"code":"AGT-14","name":"Dev","full":"Dev \u2014 Web/UI Development","trade":"Agent Fit-out","status":"Draft","sclass":"draft","priority":"Medium","links":4,"tier":2,"notes":[],"conns":[{"id":"LNK-076","other":"AGT-03","new":false},{"id":"LNK-077","other":"AGT-01","new":false},{"id":"LNK-111","other":"ARCH-01","new":true},{"id":"LNK-112","other":"ARCH-03","new":true}]}],"links":[{"id":"LNK-001","a":"ARCH-01","b":"ARCH-02","new":false},{"id":"LNK-002","a":"ARCH-01","b":"ARCH-03","new":false},{"id":"LNK-003","a":"ARCH-01","b":"INT-01","new":false},{"id":"LNK-004","a":"ARCH-01","b":"INT-02","new":false},{"id":"LNK-005","a":"ARCH-01","b":"INT-03","new":false},{"id":"LNK-006","a":"ARCH-01","b":"INT-05","new":false},{"id":"LNK-007","a":"AGT-01","b":"ARCH-01","new":false},{"id":"LNK-008","a":"AGT-02","b":"ARCH-01","new":false},{"id":"LNK-009","a":"AGT-03","b":"ARCH-01","new":false},{"id":"LNK-010","a":"ARCH-02","b":"ARCH-03","new":false},{"id":"LNK-011","a":"AGT-01","b":"ARCH-02","new":false},{"id":"LNK-012","a":"AGT-02","b":"ARCH-02","new":false},{"id":"LNK-013","a":"AGT-05","b":"ARCH-02","new":false},{"id":"LNK-014","a":"AGT-06","b":"ARCH-02","new":false},{"id":"LNK-015","a":"ARCH-02","b":"TOOL-03","new":false},{"id":"LNK-016","a":"ARCH-02","b":"ARCH-04","new":false},{"id":"LNK-017","a":"ARCH-03","b":"ARCH-04","new":false},{"id":"LNK-018","a":"AGT-01","b":"ARCH-04","new":false},{"id":"LNK-019","a":"AGT-02","b":"ARCH-04","new":false},{"id":"LNK-020","a":"AGT-03","b":"ARCH-04","new":false},{"id":"LNK-021","a":"INT-01","b":"INT-02","new":false},{"id":"LNK-022","a":"INT-01","b":"INT-03","new":false},{"id":"LNK-023","a":"ARCH-03","b":"INT-01","new":false},{"id":"LNK-024","a":"INT-02","b":"INT-03","new":false},{"id":"LNK-025","a":"INT-02","b":"INT-04","new":false},{"id":"LNK-026","a":"ARCH-03","b":"INT-02","new":false},{"id":"LNK-027","a":"AGT-01","b":"INT-03","new":false},{"id":"LNK-028","a":"AGT-02","b":"INT-03","new":false},{"id":"LNK-029","a":"AGT-03","b":"INT-03","new":false},{"id":"LNK-030","a":"ARCH-02","b":"INT-03","new":false},{"id":"LNK-031","a":"ARCH-03","b":"INT-03","new":false},{"id":"LNK-033","a":"AGT-01","b":"INT-04","new":false},{"id":"LNK-034","a":"ARCH-02","b":"INT-04","new":false},{"id":"LNK-035","a":"ARCH-03","b":"INT-04","new":false},{"id":"LNK-037","a":"AGT-01","b":"INT-05","new":false},{"id":"LNK-038","a":"ARCH-02","b":"INT-05","new":false},{"id":"LNK-039","a":"ARCH-03","b":"INT-05","new":false},{"id":"LNK-040","a":"AGT-11","b":"TOOL-01","new":false},{"id":"LNK-042","a":"ARCH-03","b":"TOOL-01","new":false},{"id":"LNK-043","a":"ARCH-02","b":"TOOL-02","new":false},{"id":"LNK-044","a":"AGT-01","b":"TOOL-02","new":false},{"id":"LNK-046","a":"ARCH-03","b":"TOOL-03","new":false},{"id":"LNK-047","a":"AGT-01","b":"TOOL-04","new":false},{"id":"LNK-048","a":"ARCH-02","b":"TOOL-04","new":false},{"id":"LNK-049","a":"ARCH-03","b":"TOOL-05","new":false},{"id":"LNK-050","a":"ARCH-03","b":"TOOL-06","new":false},{"id":"LNK-052","a":"INT-02","b":"TOOL-07","new":false},{"id":"LNK-053","a":"INT-03","b":"TOOL-07","new":false},{"id":"LNK-054","a":"AGT-05","b":"TOOL-07","new":false},{"id":"LNK-055","a":"TOOL-05","b":"TOOL-08","new":false},{"id":"LNK-056","a":"TOOL-06","b":"TOOL-08","new":false},{"id":"LNK-057","a":"ARCH-03","b":"TOOL-08","new":false},{"id":"LNK-058","a":"AGT-01","b":"TOOL-03","new":false},{"id":"LNK-059","a":"AGT-01","b":"AGT-02","new":false},{"id":"LNK-060","a":"AGT-02","b":"AGT-03","new":false},{"id":"LNK-061","a":"AGT-02","b":"AGT-07","new":false},{"id":"LNK-062","a":"AGT-03","b":"AGT-07","new":false},{"id":"LNK-063","a":"AGT-03","b":"AGT-08","new":false},{"id":"LNK-064","a":"AGT-03","b":"AGT-09","new":false},{"id":"LNK-066","a":"AGT-05","b":"INT-04","new":false},{"id":"LNK-067","a":"AGT-06","b":"INT-05","new":false},{"id":"LNK-068","a":"AGT-07","b":"AGT-08","new":false},{"id":"LNK-069","a":"AGT-07","b":"AGT-09","new":false},{"id":"LNK-070","a":"AGT-03","b":"AGT-10","new":false},{"id":"LNK-071","a":"AGT-10","b":"AGT-11","new":false},{"id":"LNK-073","a":"AGT-12","b":"TOOL-01","new":false},{"id":"LNK-074","a":"AGT-11","b":"AGT-13","new":false},{"id":"LNK-075","a":"AGT-01","b":"AGT-13","new":false},{"id":"LNK-076","a":"AGT-03","b":"AGT-14","new":false},{"id":"LNK-077","a":"AGT-01","b":"AGT-14","new":false},{"id":"LNK-078","a":"ARCH-01","b":"ARCH-04","new":true},{"id":"LNK-079","a":"ARCH-01","b":"ARCH-05","new":true},{"id":"LNK-080","a":"ARCH-01","b":"TOOL-01","new":true},{"id":"LNK-081","a":"ARCH-01","b":"TOOL-02","new":true},{"id":"LNK-082","a":"ARCH-01","b":"TOOL-03","new":true},{"id":"LNK-083","a":"ARCH-01","b":"TOOL-04","new":true},{"id":"LNK-084","a":"ARCH-01","b":"TOOL-05","new":true},{"id":"LNK-085","a":"ARCH-01","b":"TOOL-06","new":true},{"id":"LNK-086","a":"ARCH-01","b":"TOOL-07","new":true},{"id":"LNK-087","a":"ARCH-01","b":"TOOL-08","new":true},{"id":"LNK-088","a":"AGT-01","b":"ARCH-03","new":true},{"id":"LNK-089","a":"AGT-02","b":"ARCH-03","new":true},{"id":"LNK-090","a":"AGT-03","b":"ARCH-03","new":true},{"id":"LNK-092","a":"AGT-05","b":"ARCH-01","new":true},{"id":"LNK-093","a":"AGT-05","b":"ARCH-03","new":true},{"id":"LNK-094","a":"AGT-06","b":"ARCH-01","new":true},{"id":"LNK-095","a":"AGT-06","b":"ARCH-03","new":true},{"id":"LNK-096","a":"AGT-07","b":"ARCH-01","new":true},{"id":"LNK-097","a":"AGT-07","b":"ARCH-02","new":true},{"id":"LNK-098","a":"AGT-07","b":"ARCH-03","new":true},{"id":"LNK-099","a":"AGT-08","b":"ARCH-01","new":true},{"id":"LNK-100","a":"AGT-08","b":"ARCH-03","new":true},{"id":"LNK-101","a":"AGT-09","b":"ARCH-01","new":true},{"id":"LNK-102","a":"AGT-09","b":"ARCH-03","new":true},{"id":"LNK-103","a":"AGT-10","b":"ARCH-01","new":true},{"id":"LNK-104","a":"AGT-10","b":"ARCH-03","new":true},{"id":"LNK-105","a":"AGT-11","b":"ARCH-01","new":true},{"id":"LNK-106","a":"AGT-11","b":"ARCH-03","new":true},{"id":"LNK-107","a":"AGT-12","b":"ARCH-01","new":true},{"id":"LNK-108","a":"AGT-12","b":"ARCH-03","new":true},{"id":"LNK-109","a":"AGT-13","b":"ARCH-01","new":true},{"id":"LNK-110","a":"AGT-13","b":"ARCH-03","new":true},{"id":"LNK-111","a":"AGT-14","b":"ARCH-01","new":true},{"id":"LNK-112","a":"AGT-14","b":"ARCH-03","new":true}]};
+var tradeColor = {"Architecture":"#00D4FF","Interface":"#FF6B6B","Toolkit":"#00FF88","Agent Fit-out":"#B388FF"};
+var statusColor = {"draft":"#00D4FF","progress":"#FFD700","tbd":"#FF6B6B","parked":"#8899AA"};
+var byCode = {};
+DATA.nodes.forEach(function(n){ byCode[n.code]=n; });
+
+function nodeSize(n){
+  if(n.tier===1) return 116;
+  var lc=n.links;
+  if(n.tier===2) return Math.round(58 + Math.min(lc,14)*2.6);
+  return Math.round(46 + Math.min(lc,14)*2.2);
+}
+
+function layout(){
+  var map=document.getElementById('map');
+  var W=map.offsetWidth, H=map.offsetHeight;
+  var cx=W*0.5, cy=H*0.5;
+  var pos={'ARCH-01':[cx,cy]};
+  var inner=DATA.nodes.filter(function(n){return n.tier===3 && n.code.indexOf('ARCH')===0;});
+  var mid=DATA.nodes.filter(function(n){return n.tier===3 && n.code.indexOf('ARCH')!==0;});
+  var outer=DATA.nodes.filter(function(n){return n.tier===2;});
+  function ring(list,rx,ry,off){
+    list.forEach(function(n,i){
+      var a=off + i*2*Math.PI/list.length;
+      pos[n.code]=[cx+rx*Math.cos(a), cy+ry*Math.sin(a)];
+    });
+  }
+  ring(inner, W*0.16, H*0.20, -Math.PI/2);
+  ring(mid,   W*0.30, H*0.345, -Math.PI/2 + 0.24);
+  ring(outer, W*0.425, H*0.455, -Math.PI/2);
+  return pos;
+}
+
+function build(){
+  var map=document.getElementById('map');
+  map.querySelectorAll('.node').forEach(function(e){e.remove();});
+  var header=document.querySelector('.header').offsetHeight;
+  var legend=document.querySelector('.legend').offsetHeight;
+  var pb=document.querySelector('.phase-bar').offsetHeight;
+  map.style.height=(window.innerHeight-header-legend-pb)+'px';
+  var pos=layout();
+  DATA.nodes.forEach(function(n){
+    var d=document.createElement('div');
+    var s=nodeSize(n);
+    d.className='node '+(n.tier===1?'node-hub':'s-'+n.sclass);
+    if(n.code==='ARCH-03') d.className+=' knox-ring';
+    d.style.width=s+'px'; d.style.height=s+'px';
+    d.style.left=pos[n.code][0]+'px'; d.style.top=pos[n.code][1]+'px';
+    var fs=n.tier===1?0.92:(n.tier===2?0.62+n.links*0.008:0.55);
+    d.innerHTML='<div class="n-code" style="font-size:'+fs+'rem">'+(n.tier===1?'JARVIS':n.name)+'</div><div class="n-lc">'+n.code+' · '+n.links+'</div>';
+    d.onclick=function(){showModal(n.code);};
+    d.onmouseenter=function(e){showTip(n,d);};
+    d.onmouseleave=hideTip;
+    map.appendChild(d);
+  });
+  drawLines(pos);
+}
+
+function drawLines(pos){
+  var svg=document.getElementById('svg-lines');
+  var out='';
+  DATA.links.forEach(function(l){
+    var a=pos[l.a], b=pos[l.b];
+    if(!a||!b) return;
+    var knox=(l.a==='ARCH-03'||l.b==='ARCH-03'||l.a==='AGT-04'||l.b==='AGT-04');
+    var other=(l.a==='ARCH-01')?l.b:l.a;
+    var c=knox?'#F4A261':tradeColor[byCode[other].trade];
+    out+='<line x1="'+a[0]+'" y1="'+a[1]+'" x2="'+b[0]+'" y2="'+b[1]+'" stroke="'+c+'" stroke-width="1" opacity="'+(knox?0.3:0.22)+'"/>';
+  });
+  svg.innerHTML=out;
+}
+
+var tip=document.getElementById('tip');
+function showTip(n,el){
+  tip.innerHTML='<b>'+n.code+' '+n.full+'</b><div class="t-sub">'+n.trade+' · '+n.status+' · '+n.links+' links</div>';
+  tip.style.display='block';
+  var r=el.getBoundingClientRect();
+  var tx=r.left+r.width/2-tip.offsetWidth/2;
+  tx=Math.max(6,Math.min(tx,window.innerWidth-tip.offsetWidth-6));
+  var ty=r.top-tip.offsetHeight-8; if(ty<50) ty=r.bottom+8;
+  tip.style.left=tx+'px'; tip.style.top=ty+'px';
+}
+function hideTip(){tip.style.display='none';}
+
+function showModal(code){
+  hideTip();
+  var n=byCode[code];
+  var c=n.tier===1?'#00D4FF':statusColor[n.sclass];
+  document.getElementById('m-title').style.color=c;
+  document.getElementById('m-title').textContent=n.code+' — '+n.full;
+  document.getElementById('m-role').textContent=n.trade+' trade · '+n.priority;
+  var b='<div class="msec"><div class="mlabel">Status</div><div class="mtext">'+n.status+'</div></div>';
+  b+='<div class="msec"><div class="mlabel">Connections ('+n.links+')</div><div class="mtext"><table class="reg"><tr><th>Link</th><th>Connected Unit</th></tr>';
+  n.conns.forEach(function(cn){
+    var o=byCode[cn.other];
+    b+='<tr><td class="lnk-id">'+cn.id+'</td><td>'+o.code+' '+o.full+'</td></tr>';
+  });
+  b+='</table></div></div>';
+  if(n.notes && n.notes.length){
+    b+='<div class="msec"><div class="mlabel">Connection Notes</div><div class="mtext" style="color:#F4A261">'+n.notes.join('<br>')+'</div></div>';
+  }
+  b+='<div class="msec"><div class="mlabel">Working Doc</div><div class="mtext" style="color:#8899AA">Links to unit working doc once unit folders are created</div></div>';
+  document.getElementById('m-body').innerHTML=b;
+  document.getElementById('modal').classList.add('open');
+}
+function showRegister(){
+  document.getElementById('m-title').style.color='#B388FF';
+  document.getElementById('m-title').textContent='Link Register — 104 links';
+  document.getElementById('m-role').textContent='Canonical register per SOW v1.5 · Retired, never reuse: 032, 036, 041, 045, 051 (mis-assigned to a note), 065 & 091 (AGT-04 merged into ARCH-03, 3 Jul 2026), 072';
+  var b='<table class="reg"><tr><th>ID</th><th>Unit A</th><th>Unit B</th></tr>';
+  DATA.links.forEach(function(l){
+    b+='<tr><td class="lnk-id">'+l.id+(l.new?' <span style="color:#8899AA;font-weight:400;font-size:.6rem">new</span>':'')+'</td><td>'+l.a+' '+byCode[l.a].name+'</td><td>'+l.b+' '+byCode[l.b].name+'</td></tr>';
+  });
+  b+='</table>';
+  document.getElementById('m-body').innerHTML=b;
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){document.getElementById('modal').classList.remove('open');}
+document.getElementById('modal').addEventListener('click',function(e){if(e.target===this)closeModal();});
+function toggleFS(){if(!document.fullscreenElement){document.documentElement.requestFullscreen();}else{document.exitFullscreen();}}
+window.addEventListener('load',build);
+window.addEventListener('resize',build);
+</script>
+</body>
+</html>
